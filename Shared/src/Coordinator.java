@@ -1,4 +1,4 @@
-public class Coordinator implements Runnable {
+public abstract class Coordinator implements Runnable {
 
     private ICommunicator communicator;
 
@@ -7,7 +7,5 @@ public class Coordinator implements Runnable {
     }
 
     @Override
-    public void run() {
-
-    }
+    public abstract void run();
 }
