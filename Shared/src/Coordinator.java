@@ -1,6 +1,6 @@
 public abstract class Coordinator implements Runnable {
 
-    private ICommunicator communicator;
+    protected ICommunicator communicator;
 
     public Coordinator(ICommunicator communicator) {
         this.communicator = communicator;
