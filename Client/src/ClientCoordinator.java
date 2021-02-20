@@ -9,7 +9,7 @@ public class ClientCoordinator extends Coordinator {
 
     private final String PING_MESSAGE = "CHECKALIVE";
     private final String PING_CONFIRM = "ALIVE";
-    private final int TIMEOUT_SECONDS = 15;
+    private final int TIMEOUT_SECONDS = 5;
     private final String TIMEOUT_MESSAGE = "TIMEOUT";
 
     public ClientCoordinator(ICommunicator communicator) {
@@ -24,7 +24,7 @@ public class ClientCoordinator extends Coordinator {
         // connect to all members
         for (Member m: members) {
             // open the relevant socket
-            try (Socket socket = new Socket(m.getIP(), Integer.parseInt(m.getPort()));) {
+            try (Socket socket = getSocket(m.getIP(), m.getPort())) {
                 // obtain the relevant IO classes
                 Scanner in = new Scanner(socket.getInputStream());
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
@@ -47,6 +47,7 @@ public class ClientCoordinator extends Coordinator {
 
                         // send a timeout message to the server with the user's id
                         serverPrintWriter.println(TIMEOUT_MESSAGE + m.getUID());
+                        break;
                     }
                 }
 
@@ -56,12 +57,16 @@ public class ClientCoordinator extends Coordinator {
                 e.printStackTrace();
             }
         }
-
-        // check if they're alive
     }
 
-    private PrintWriter getServerPrintWriter(String IP, String port) throws IOException {
-        Socket socket = new Socket(IP, Integer.parseInt(port));
+    protected PrintWriter getServerPrintWriter(String IP, String port) throws IOException {
+        Socket socket = getSocket(IP, port);
         return new PrintWriter(socket.getOutputStream(), true);
+    }
+
+
+    // We need this method so we can mock the socket
+    protected Socket getSocket(String IP, String port) throws IOException {
+        return new Socket(IP, Integer.parseInt(port));
     }
 }

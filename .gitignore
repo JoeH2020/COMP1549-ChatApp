@@ -1,1 +1,7 @@
-.idea
+.gradle
+.DS_Store
+Client/out
+Server/out
+
+Shared/out
+out
