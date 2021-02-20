@@ -88,11 +88,8 @@ public class ClientCoordinatorTest {
 
         clientCoordinator.run();
 
-        String member1Output = member1OutputStream.toString();
-        String member2Output = member2OutputStream.toString();
-
-        assertEquals(PING_MESSAGE, member1Output.strip());
-        assertEquals(PING_MESSAGE, member2Output.strip());
+        // there should be no timeout messages sent to the server
+        assertEquals("", serverOutputStream.toString());
     }
 
     @Test
@@ -111,11 +108,7 @@ public class ClientCoordinatorTest {
 
         clientCoordinator.run();
 
-        String member1Output = member1OutputStream.toString();
-        String member2Output = member2OutputStream.toString();
-
-        assertEquals(PING_MESSAGE, member1Output.strip());
-        assertEquals(PING_MESSAGE, member2Output.strip());
+        assertEquals("", serverOutputStream.toString());
     }
 
     @Test
