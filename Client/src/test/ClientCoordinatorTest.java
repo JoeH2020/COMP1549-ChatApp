@@ -14,6 +14,11 @@ import static org.mockito.Mockito.when;
 
 public class ClientCoordinatorTest {
 
+    /*
+    Please refer to the membersSendOtherMessagesBeforeConfirming method for some comments on how all the tests
+    roughly work.
+     */
+
     @Mock
     static ClientCommunicator clientCommunicator;
 
@@ -57,6 +62,7 @@ public class ClientCoordinatorTest {
                 return socket;
             }
 
+            // overriding this method allows us to read what the ClientCoordinator sends to the server
             @Override
             protected PrintWriter getServerPrintWriter(String IP, String port) {
                 return new PrintWriter(serverOutputStream, true);
@@ -72,6 +78,7 @@ public class ClientCoordinatorTest {
 
     @Test
     public void membersSendOtherMessagesBeforeConfirming() {
+        // these Input/Output streams allow us to write/read what the ClientCoordinator read/writes from the socket
         ByteArrayInputStream member1InputStream = new ByteArrayInputStream(
                 ("SOME RANDOM STUFF\n" + PING_CONFIRM).getBytes());
         ByteArrayInputStream member2InputStream = new ByteArrayInputStream(
@@ -79,6 +86,8 @@ public class ClientCoordinatorTest {
         ByteArrayOutputStream member1OutputStream = new ByteArrayOutputStream();
         ByteArrayOutputStream member2OutputStream = new ByteArrayOutputStream();
 
+        // here the mock sockets is configured to return the above streams, whereas the normal socket would return
+        // the proper streams
         try {
             when(socket.getInputStream()).thenReturn(member1InputStream, member2InputStream);
             when(socket.getOutputStream()).thenReturn(member1OutputStream, member2OutputStream);
