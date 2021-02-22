@@ -24,6 +24,7 @@ public class ServerCoordinator extends Coordinator {
     Scanner in ;
     PrintWriter out;
 
+
     @Override
     public void run() {
         coordinator.setIP(targetIP);
