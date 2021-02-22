@@ -4,9 +4,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.PrintWriter;
 
-public class ClientMember extends Member{
+public class ClientMember extends Member {
 
-//  Declare the instances of the JFrame and relevant elements
+    //  Declare the instances of the JFrame and relevant elements
     JFrame frame = new JFrame("Chat Client");
     JTextField textBox = new JTextField(60);
     JTextArea messageArea = new JTextArea(20, 60);
@@ -32,7 +32,15 @@ public class ClientMember extends Member{
                 textBox.setText("");
             }
         });
-
     }
 
+    private String getUsername() {
+        return JOptionPane.showInputDialog(
+                frame,
+                "Please enter a username: ",
+                "Username Entry",
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+    }
 }
