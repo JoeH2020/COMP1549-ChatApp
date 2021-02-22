@@ -23,15 +23,15 @@ public class ServerCoordinator extends Coordinator {
     Member coordinator;
     Scanner in ;
     PrintWriter out;
+    ServerSocket listener;
 
     @Override
     public void run() {
         coordinator.setIP(targetIP);
         coordinator.setPort(targetPort);
-        ServerSocket listener = new ServerSocket(59001);
-        Socket socket = listener.accept();
-
         try {
+            listener = new ServerSocket(59001);
+            Socket socket = listener.accept();
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
 
@@ -39,7 +39,7 @@ public class ServerCoordinator extends Coordinator {
             Instant time1 = Instant.now();
 
             while (true) {
-                if ( in.hasNextLine() && in.nextLine().equals(PING_CONFIRM)) {
+                if (in.hasNextLine() && in.nextLine().equals(PING_CONFIRM)) {
                     //Coordinator is still alive
                     break;
                 } else if (Duration.between(time1, Instant.now()).getSeconds() > TIMEOUT_SECONDS) {
@@ -55,16 +55,17 @@ public class ServerCoordinator extends Coordinator {
 
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         } finally {
             if (!(listener.isClosed())) {
                 try {
                     listener.close();
-                    socket.close();
-                } catch (IOException e )
-                {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
+    }
     }
 }
