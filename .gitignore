@@ -5,3 +5,7 @@ Server/out
 
 Shared/out
 out
+.idea
+Client/target
+Server/target
+Shared/target
