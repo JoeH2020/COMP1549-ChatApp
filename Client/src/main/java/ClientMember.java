@@ -4,15 +4,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.PrintWriter;
 
-public class ClientMember {
-
-    private String UID;
-    private String port;
-    private String IP;
+public class ClientMember extends Member{
 
     public ClientMember(String UID, String IP, String port) {
-        this.UID = UID;
-        this.port = port;
-        this.IP = IP;
+        super(UID, IP, port);
     }
 }
