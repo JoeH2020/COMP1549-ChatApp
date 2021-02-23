@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.concurrent.*;
+import java.util.logging.Handler;
 
 /**
  * A multithreaded chat room server. When a client connects the server requests a screen
