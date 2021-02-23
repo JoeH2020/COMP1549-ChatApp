@@ -1,69 +1,116 @@
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashSet;
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Handler;
 
-public class ClientCommunicator implements ICommunicator {
+public class ServerCommunicator implements ICommunicator {
 
-    public Member self;
-    public String serverIP;
-    public String serverPort;
-    public HashSet<Member> members;
+    // All client names, so we can check for duplicates upon registration.
+    private static Set<String> names = new HashSet<>();
 
-    public Scanner in;
-    public PrintWriter out;
+    // The set of all the print writers for all the clients, used for broadcast.
+    private static Set<PrintWriter> writers = new HashSet<>();
+    private String serverIP;
+    private String serverPort;
+    private LinkedHashMap.LinkedKeySet members;
 
-
-    public ClientCommunicator(String uniqueID, String selfIP, String selfPort, String serverIP, String serverPort) {
-        this.self = new Member(uniqueID, selfIP, selfPort);
-        this.serverIP = serverIP;
-        this.serverPort = serverPort;
-        this.members = new HashSet<>();
-    }
-
-    private void openSession() throws IOException {
-        try {
-            Socket socket = new Socket(serverIP, 59001);
-            in = new Scanner(socket.getInputStream());
-            out = new PrintWriter(socket.getOutputStream(), true);
-
-            while (in.hasNextLine()) {
-                String line = in.nextLine();
-                if (line.startsWith("SUBMITNAME")) {
-//                  Need to call the method to print out the username here
-                    out.println("SYSTEM: CALL METHOD TO PRINT NAME");
-                } else if (line.startsWith("NAMEACCEPTED")) {
-//                  Need to call the method to update the GUI window with the username and allow user entry
-                    out.println("SYSTEM: CALL METHOD TO UPDATE USERNAME");
-//                    this.frame.setTitle("Chatter - " + line.substring(13));
-//                    textField.setEditable(true);
-                } else if (line.startsWith("MESSAGE")) {
-//                  Need to call the method to add the user message to the active window
-                    out.println("SYSTEM: CALL METHOD TO APPEND INCOMING MESSAGE");
-//                    messageArea.append(line.substring(8) + "\n");
-                }
+    public static void main(String[] args) throws Exception {
+        System.out.println("The chat server is running...");
+        ExecutorService pool = Executors.newFixedThreadPool(500);
+        try (ServerSocket listener = new ServerSocket(59001)) {
+            while (true) {
+                pool.execute(new Handler(listener.accept()));
             }
-        } finally {
-//            Call methods to update the frame and make it visible (window needs to have focus)
-//            frame.setVisible(false);
-//            frame.dispose();
         }
     }
 
+    private static class Handler implements Runnable {
+        private String name;
+        private Socket socket;
+        private Scanner in;
+        private PrintWriter out;
 
-    @Override
-    public String getTargetIP() {
-        return this.serverIP;
+        public Handler(Socket socket) {
+            this.socket = socket;
+        }
+
+        public void run() {
+            try {
+                in = new Scanner(socket.getInputStream());
+                out = new PrintWriter(socket.getOutputStream(), true);
+
+                // Keep requesting a name until we get a unique one.
+                while (true) {
+                    out.println("SUBMITNAME");
+                    name = in.nextLine();
+                    if (name == null) {
+                        return;
+                    }
+                    synchronized (names) {
+                        if (!name.isEmpty() && !names.contains(name)) {
+                            names.add(name);
+                            break;
+                        }
+                    }
+                }
+
+                // Now that a successful name has been chosen, add the socket's print writer
+                // to the set of all writers so this client can receive broadcast messages.
+                // But BEFORE THAT, let everyone else know that the new person has joined!
+                out.println("NAMEACCEPTED " + name);
+                for (PrintWriter writer : writers) {
+                    writer.println("MESSAGE " + name + " has joined");
+                }
+                writers.add(out);
+
+                // Accept messages from this client and broadcast them.
+                while (true) {
+                    String input = in.nextLine();
+                    if (input.toLowerCase().startsWith("/quit")) {
+                        return;
+                    }
+                    for (PrintWriter writer : writers) {
+                        writer.println("MESSAGE " + name + ": " + input);
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println(e);
+            } finally {
+                if (out != null) {
+                    writers.remove(out);
+                }
+                if (name != null) {
+                    System.out.println(name + " is leaving");
+                    names.remove(name);
+                    for (PrintWriter writer : writers) {
+                        writer.println("MESSAGE " + name + " has left");
+                    }
+                }
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                }
+            }
+        }
     }
 
-    @Override
-    public String getTargetPort() {
-        return this.serverPort;
-    }
+        @Override
+        public String getTargetIP() {
+            return this.serverIP;
+        }
 
-    @Override
-    public Member[] getMembers() {
-        return (Member[]) this.members.toArray();
-    }
+        @Override
+        public String getTargetPort() {
+            return this.serverPort;
+        }
+
+        @Override
+        public Member[] getMembers() {
+            return (Member[]) this.members.toArray();
+        }
 }
+
