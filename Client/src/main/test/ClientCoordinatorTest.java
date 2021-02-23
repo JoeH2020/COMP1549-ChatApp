@@ -160,7 +160,12 @@ public class ClientCoordinatorTest {
         String serverOutput = serverOutputStream.toString();
 
         assertEquals(TIMEOUT_MESSAGE + members[0].getUID() + "\n" + TIMEOUT_MESSAGE + members[1].getUID(),
-                serverOutput.strip());
+                replaceNewLinesWithUnixNewlines(serverOutput.strip()));
+    }
+
+    private String replaceNewLinesWithUnixNewlines(String in) {
+        in.replaceAll("\r\n", "\n");
+        return in;
     }
 
 }
