@@ -68,5 +68,4 @@ public class ServerCoordinator extends Coordinator {
             }
         }
     }
-    }
 }
