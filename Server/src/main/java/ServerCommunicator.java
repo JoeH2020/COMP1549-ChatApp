@@ -1,4 +1,7 @@
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.HashSet;
+import java.util.Scanner;
 
 public class ServerCommunicator implements ICommunicator {
 
