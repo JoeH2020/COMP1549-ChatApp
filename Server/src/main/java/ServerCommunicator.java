@@ -1,7 +1,11 @@
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 
 public class ServerCommunicator implements ICommunicator {
 
@@ -13,12 +17,17 @@ public class ServerCommunicator implements ICommunicator {
         private Socket socket;
         private Scanner in;
         private PrintWriter out;
+        private static Set<String> names = new HashSet<>();
+        private static Set<PrintWriter> writers = new HashSet<>();
 
         public Handler(Socket socket) {
             this.socket = socket;
         }
 
         public void run() {
+
+
+
             try {
                 in = new Scanner(socket.getInputStream());
                 out = new PrintWriter(socket.getOutputStream(), true);
