@@ -8,14 +8,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Scanner;
 
-public abstract class ServerCoordinator extends Coordinator {
+public class ServerCoordinator extends Coordinator {
     public ServerCoordinator(ICommunicator communicator) {
         super(communicator);
     }
 
     private final String PING_MESSAGE = "CHECKALIVE";
     private final String PING_CONFIRM = "ALIVE";
-    private final int TIMEOUT_SECONDS = 1;
+    private final int TIMEOUT_SECONDS = 15;
 
     // Getting the coordinator's ip
     String targetIP = communicator.getTargetIP();
@@ -72,10 +72,9 @@ public abstract class ServerCoordinator extends Coordinator {
                                 i++;
                             }}
                         //There are no users so no coordinator can be chosen.
-                        if (flag == false) {
+                        if (!flag) {
                             System.out.println("Not enough users to pick another coordinator");
                         }
-
                         break;
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -95,21 +94,15 @@ public abstract class ServerCoordinator extends Coordinator {
             }
         }
     }
-
-
-    // Had to make the method abstract because the test class was giving me some issues.
-
-
-//    private Socket getClientSocket(ServerSocket listener) {
-//        try {
-//            return listener.accept();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-
-    protected abstract Socket getClientSocket(ServerSocket listener);
+    
+    protected Socket getClientSocket(ServerSocket listener) {
+        try {
+            return listener.accept();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
 
 
