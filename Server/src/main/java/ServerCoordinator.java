@@ -34,7 +34,7 @@ public class ServerCoordinator extends Coordinator {
 
     @Override
     public void run() {
-        coordinator = new Member("3",targetIP,targetPort);
+        coordinator = new Member("John",targetIP,targetPort);
         try {
             listener = new ServerSocket(59001);
             Socket socket = getClientSocket(listener);
@@ -63,6 +63,7 @@ public class ServerCoordinator extends Coordinator {
                             if (!members[i].getUID().equals(coordinator.getUID())) {
                                 coordinator.setIP(members[i].getIP());
                                 coordinator.setPort(members[i].getPort());
+                                coordinator.setUID(members[i].getUID());
                                 //Printing new coordinator's info
                                 System.out.println("New coordinator is: " + coordinator.getUID()  + " (" + coordinator.getIP() + ":" + coordinator.getPort()+ ")" );
                                 flag = true;
@@ -94,7 +95,7 @@ public class ServerCoordinator extends Coordinator {
             }
         }
     }
-    
+
     protected Socket getClientSocket(ServerSocket listener) {
         try {
             return listener.accept();

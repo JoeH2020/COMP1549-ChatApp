@@ -41,9 +41,9 @@ public class ServerCoordinatorTest {
 
         //Creating an array with two 'fake' members.
         members = new Member[3];
-        members[0] = new Member("3", "192.168.0.3", "4300");
-        members[1] = new Member("2", "192.168.0.2", "4300");
-        members[2] = new Member("1", "192.168.0.1", "4300");
+        members[0] = new Member("John", "192.168.0.3", "4300");
+        members[1] = new Member("Mike", "192.168.0.2", "4300");
+        members[2] = new Member("Peter", "192.168.0.1", "4300");
 
         //Creating mock methods to return correct values which in this case
         // are the coordinator's ip and port.
