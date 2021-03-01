@@ -23,13 +23,7 @@ public class ServerCommunicatorTest {
     @Mock
     static ServerSocket serverSocket;
     static Socket socket;
-
     static ServerCoordinator serverCoordinator;
-
-    static final String PING_CONFIRM = "ALIVE";
-    static final String PING_MESSAGE = "CHECKALIVE";
-    static final String TIMEOUT_MESSAGE = "TIMEOUT";
-
     static Member[] members;
 
     static ByteArrayOutputStream serverOutputStream = new ByteArrayOutputStream();
@@ -59,6 +53,9 @@ public class ServerCommunicatorTest {
             protected Socket getClientSocket(ServerSocket listener) {return socket;}
 
             };
+
+        //in = new Scanner(socket.getInputStream());
+        //out = new PrintWriter(socket.getOutputStream(), true);
         when(socket.getOutputStream()).thenReturn(serverOutputStream);
 
     }
@@ -73,8 +70,19 @@ public class ServerCommunicatorTest {
 
     @Test
     public void joiningRoom() {
-        //Test joining the chat room
+        String name;
+        name = "name";
 
+        socket = serverCoordinator.getClientSocket(serverSocket);
+        ByteArrayInputStream coordinatorInputStream = new ByteArrayInputStream((name).getBytes(StandardCharsets.UTF_8));
+        ByteArrayOutputStream coordinatorOutputStream = new ByteArrayOutputStream();
+
+        try {
+            when(socket.getInputStream()).thenReturn(coordinatorInputStream);
+            when(socket.getOutputStream()).thenReturn(coordinatorOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
