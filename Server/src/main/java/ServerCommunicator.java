@@ -10,13 +10,15 @@ public class ServerCommunicator implements ICommunicator {
 
     public Member coordinator;
     public HashSet<Member> members;
-    private static class Handler implements Runnable {
+    private class Handler implements Runnable {
         private String name;
         private Socket socket;
         private Scanner in;
         private PrintWriter out;
-        private static Set<String> names = new HashSet<>();
-        private static Set<PrintWriter> writers = new HashSet<>();
+        String targetIP = getTargetIP();
+        String targetPort = getTargetPort();
+        private Set<String> names = new HashSet<>();
+        private Set<PrintWriter> writers = new HashSet<>();
 
         public Handler(Socket socket) {
             this.socket = socket;
@@ -38,7 +40,12 @@ public class ServerCommunicator implements ICommunicator {
                         return;
                     }
                     synchronized (names) {
-                        if (!name.isEmpty() && !names.contains(name)) {
+                        if (names.isEmpty()) {
+                            //This user will become the first coordinator
+                            out.println("New Coordinator:" + name);
+                            coordinator = new Member(name,targetIP,targetPort);
+
+                        }else if (!name.isEmpty() && !names.contains(name)) {
                             //Checking if name is already in names
                             names.add(name);
                             break;
