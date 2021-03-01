@@ -1,8 +1,6 @@
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
@@ -34,25 +32,25 @@ public class ServerCommunicator implements ICommunicator {
 
                 // Keep requesting a name until we get a unique one.
                 while (true) {
-                    out.println("SUBMITNAME");
+                    out.println("What is your name?");
                     name = in.nextLine();
                     if (name == null) {
                         return;
                     }
                     synchronized (names) {
                         if (!name.isEmpty() && !names.contains(name)) {
+                            //Checking if name is already in names
                             names.add(name);
                             break;
+                        }else {
+                            out.println("Your name seems familiar. Try adding a number to the end.");
                         }
                     }
                 }
 
-                // Now that a successful name has been chosen, add the socket's print writer
-                // to the set of all writers so this client can receive broadcast messages.
-                // But BEFORE THAT, let everyone else know that the new person has joined!
-                out.println("NAMEACCEPTED " + name);
+                out.println("Hello" + name + ", your name has been accepted.");
                 for (PrintWriter writer : writers) {
-                    writer.println("MESSAGE " + name + " has joined");
+                    writer.println("MESSAGE " + name + " has joined the chat");
                 }
                 writers.add(out);
 
@@ -72,6 +70,8 @@ public class ServerCommunicator implements ICommunicator {
                 if (out != null) {
                     writers.remove(out);
                 }
+
+
                 if (name != null) {
                     System.out.println(name + " is leaving");
                     names.remove(name);
