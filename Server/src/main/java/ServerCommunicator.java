@@ -46,7 +46,9 @@ public class ServerCommunicator implements ICommunicator {
                             coordinator = new Member(name,targetIP,targetPort);
 
                         }else if (!name.isEmpty() && !names.contains(name)) {
-                            //Checking if name is already in names
+                            //Checking if name is not already in names
+                            name = name.substring(0,1).toUpperCase() + name.substring(1).toLowerCase();
+                            // Capitalising the first letter of their names then adding them
                             names.add(name);
                             break;
                         }else {
