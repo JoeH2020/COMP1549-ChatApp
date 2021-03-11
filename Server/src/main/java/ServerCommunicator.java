@@ -22,8 +22,6 @@ public class ServerCommunicator implements ICommunicator, Runnable {
     private Socket socket;
     private Scanner in;
     private PrintWriter out;
-    //    String targetIP = getTargetIP();
-//    String targetPort = getTargetPort();
     private Set<String> names = new HashSet<>();
     private Set<PrintWriter> writers = new HashSet<>();
 
@@ -35,8 +33,6 @@ public class ServerCommunicator implements ICommunicator, Runnable {
     public void run() {
 
         try {
-//            ServerSocket listener = new ServerSocket(59001);
-//            socket = (listener.accept());
             System.out.println("New client joined: " + socket.getInetAddress() + ":" + socket.getPort());
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
@@ -98,7 +94,7 @@ public class ServerCommunicator implements ICommunicator, Runnable {
                     writer.println("MESSAGE " + name + " has left");
                 }
             }
-            //try { socket.close(); } catch (IOException e) {}
+            try { socket.close(); } catch (IOException e) {}
         }
     }
 
