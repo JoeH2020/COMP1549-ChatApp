@@ -1,15 +1,16 @@
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashSet;
 import java.util.Scanner;
 
 public class ClientCommunicator implements ICommunicator {
 
+    private static String serverPort;
     public Member self;
     public String serverIP;
-    public String serverPort;
-    public HashSet<Member> members;
+    public static HashSet<Member> members;
 
     public Scanner in;
     public PrintWriter out;
@@ -56,12 +57,39 @@ public class ClientCommunicator implements ICommunicator {
     public String getTargetIP() {
         return this.serverIP;
     }
+
     @Override
     public String getTargetPort() {
         return this.serverPort;
     }
+
     @Override
     public Member[] getMembers() {
         return (Member[]) this.members.toArray();
     }
+
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            System.err.println("You need only to pass the server IP in as an argument.");
+            return;
+        }
+
+
+        int membersSize = members.size(); //To do this I made members static, change if this is a problem.
+        membersSize++;
+        String uniqueID = String.valueOf(membersSize); //Used to create a unique ID, check length and add 1
+        String serverIP = args[0];
+
+        Socket socket = new Socket(args[0], 59001);
+
+        String selfIP = String.valueOf(socket.getInetAddress()); //Getting the IP of the Client as a String
+        String selfPort = String.valueOf(socket.getPort()); //Getting the port number of client as a String
+
+
+
+        ClientCommunicator client = new ClientCommunicator(uniqueID, selfIP ,selfPort , serverIP, serverPort);
+
+        client.openSession(); //Start the session
+    }
+
 }
