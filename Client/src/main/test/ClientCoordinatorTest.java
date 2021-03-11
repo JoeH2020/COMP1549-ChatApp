@@ -23,7 +23,7 @@ public class ClientCoordinatorTest {
     static ServerSocket serverSocket;
     static Socket socket;
 
-    static ClientCoordinator clientCoordinator;
+    //static ClientCoordinator clientCoordinator;
 
     static final String PING_CONFIRM = "ALIVE";
     static final String PING_MESSAGE = "CHECKALIVE";
