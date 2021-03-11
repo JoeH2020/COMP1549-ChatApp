@@ -36,7 +36,6 @@ public class ServerCommunicator implements ICommunicator, Runnable {
 
         try {
 //            ServerSocket listener = new ServerSocket(59001);
-//            System.out.println("Waiting for clients to join...");
 //            socket = (listener.accept());
             System.out.println("New client joined: " + socket.getInetAddress() + ":" + socket.getPort());
             in = new Scanner(socket.getInputStream());
