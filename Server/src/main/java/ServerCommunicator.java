@@ -17,7 +17,6 @@ public class ServerCommunicator implements ICommunicator, Runnable {
     }
 
     public Member coordinator;
-    public HashSet<Member> members;
     private String name;
     private Socket socket;
     private Scanner in;
@@ -25,12 +24,11 @@ public class ServerCommunicator implements ICommunicator, Runnable {
     private Set<String> names = new HashSet<>();
     private Set<PrintWriter> writers = new HashSet<>();
 
-    public ServerCommunicator() {
-
-    }
+    private ServerSingleton serverSingleton;
 
 
     public void run() {
+        serverSingleton = ServerSingleton.getInstance();
 
         try {
             System.out.println("New client joined: " + socket.getInetAddress() + ":" + socket.getPort());
@@ -44,25 +42,23 @@ public class ServerCommunicator implements ICommunicator, Runnable {
                 if (name == null) {
                     return;
                 }
-                synchronized (names) {
-                    if (names.isEmpty()) {
-                        //This user will become the first coordinator
-                        out.println("New Coordinator:" + name);
-                        String ip = String.valueOf(socket.getInetAddress());
-                        String port = String.valueOf(socket.getPort());
-                        coordinator = new Member(name, ip, port);
-                        names.add(name);
+                HashSet<Member> members = serverSingleton.getMembers();
+                Member prospectiveMember = new Member(name, socket.getInetAddress().toString(), String.valueOf(socket.getPort()));
+                if (members.isEmpty()) {
+                    //This user will become the first coordinator
+                    // out.println("New Coordinator:" + name);
+                    coordinator = prospectiveMember;
+                    members.add(prospectiveMember);
 
-                    } else if (!name.isEmpty() && !names.contains(name)) {
-                        //Checking if name is not already in names
-                        name = name.substring(0, 1).toUpperCase() + name.substring(1).toLowerCase();
-                        // Capitalising the first letter of their names then adding them
-                        names.add(name);
-                    } else {
-                        out.println("Your name seems familiar. Try adding a number to the end.");
-                    }
+                } else if (!members.contains(prospectiveMember)) {
+                    //Checking if name is not already in names
+                    // name = name.substring(0, 1).toUpperCase() + name.substring(1).toLowerCase();
+                    // Capitalising the first letter of their names then adding them
+                    members.add(prospectiveMember);
+                } else {
+                    out.println("NAMEREFUSED");
                 }
-                out.println("Hello" + name + ", your name has been accepted.");
+                out.println("NAMEACCEPTED");
                 for (PrintWriter writer : writers) {
                     writer.println("MESSAGE " + name + " has joined the chat");
                 }
@@ -112,7 +108,7 @@ public class ServerCommunicator implements ICommunicator, Runnable {
 
     @Override
     public Member[] getMembers() {
-        return (Member[]) members.toArray();
+        return serverSingleton.getMembers().toArray(new Member[0]);
     }
 
     public static void main(String[] args) {

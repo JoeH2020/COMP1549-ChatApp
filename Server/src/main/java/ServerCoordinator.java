@@ -63,7 +63,7 @@ public class ServerCoordinator extends Coordinator {
                             if (!members[i].getUID().equals(coordinator.getUID())) {
                                 coordinator.setIP(members[i].getIP());
                                 coordinator.setPort(members[i].getPort());
-                                coordinator.setUID(members[i].getUID());
+                                //coordinator.setUID(members[i].getUID());
                                 //Printing new coordinator's info
                                 System.out.println("New coordinator is: " + coordinator.getUID()  + " (" + coordinator.getIP() + ":" + coordinator.getPort()+ ")" );
                                 flag = true;

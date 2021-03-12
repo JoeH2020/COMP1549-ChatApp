@@ -27,11 +27,12 @@ public class ClientCommunicator implements ICommunicator {
     }
 
     private void openSession() throws IOException {
-        userInputQueue.start();
+
         try {
             Socket socket = new Socket(serverIP, 59001);
             serverInputQueue = new InputQueue(socket.getInputStream());
             serverInputQueue.start();
+            userInputQueue.start();
             out = new PrintWriter(socket.getOutputStream(), true);
 
             while (true) {
@@ -41,10 +42,14 @@ public class ClientCommunicator implements ICommunicator {
     //                  Need to call the method to print out the username here
                         out.println(self.getUID());
                     } else if (line.startsWith("NAMEACCEPTED")) {
-    //                  Need to call the method to update the GUI window with the username and allow user entry
-                        out.println("SYSTEM: CALL METHOD TO UPDATE USERNAME");
-    //                    this.frame.setTitle("Chatter - " + line.substring(13));
-    //                    textField.setEditable(true);
+                        //                  Need to call the method to update the GUI window with the username and allow user entry
+                        System.out.println("Connected to server.");
+                        //                    this.frame.setTitle("Chatter - " + line.substring(13));
+                        //                    textField.setEditable(true);
+                    } else if (line.startsWith("NAMEREFUSED")) {
+                        System.out.println("Username is already in use. Please choose a new username.");
+                        // Quit the program because the username is specified in command line
+                        System.exit(0);
                     } else if (line.startsWith("MESSAGE")) {
     //                  Need to call the method to add the user message to the active window
                         out.println("SYSTEM: CALL METHOD TO APPEND INCOMING MESSAGE");
@@ -59,7 +64,11 @@ public class ClientCommunicator implements ICommunicator {
                     System.out.println("Sent message: " + item);
                     out.println(item);
                 }
+                // sleep so that every thread has a chance to run
+                Thread.sleep(500);
             }
+        } catch (InterruptedException e) {
+            //e.printStackTrace();
         } finally {
 //            Call methods to update the frame and make it visible (window needs to have focus)
 //            frame.setVisible(false);

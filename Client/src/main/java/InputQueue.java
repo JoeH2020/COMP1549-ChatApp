@@ -16,6 +16,11 @@ public class InputQueue {
                 while(true) {
                     if (in.hasNextLine())
                         inputQueue.add(in.nextLine());
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+
+                    }
                 }
             }
         };

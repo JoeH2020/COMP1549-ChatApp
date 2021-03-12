@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class Member {
 
     private String UID;
@@ -14,10 +16,6 @@ public class Member {
         return UID;
     }
 
-    public void setUID(String UID) {
-        this.UID = UID;
-    }
-
     public String getPort() {
         return port;
     }
@@ -32,5 +30,24 @@ public class Member {
 
     public void setIP(String IP) {
         this.IP = IP;
+    }
+
+
+    // these two methods allow us to check if a hashcode contains a Member
+    // by only checking the UID
+    @Override
+    public int hashCode() {
+        return Objects.hash(UID);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Member) {
+            Member m = (Member) o;
+            if (m.getUID().equals(this.UID)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
