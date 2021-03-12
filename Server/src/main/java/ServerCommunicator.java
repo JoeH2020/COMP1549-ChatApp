@@ -36,10 +36,10 @@ public class ServerCommunicator implements ICommunicator, Runnable {
             System.out.println("New client joined: " + socket.getInetAddress() + ":" + socket.getPort());
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
+            out.println("SUBMITNAME");
 
             // Keep requesting a name until we get a unique one.
-            while (true) {
-                out.println("What is your name?");
+            while (in.hasNextLine()) {
                 name = in.nextLine();
                 if (name == null) {
                     return;
