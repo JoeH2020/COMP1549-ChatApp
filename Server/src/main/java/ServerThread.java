@@ -70,10 +70,12 @@ public class ServerThread implements ICommunicator, Runnable {
                     String input = in.nextLine();
                     if (input.toLowerCase().startsWith("/quit")) {
                         return;
+                    } else if (input.startsWith("MESSAGE")) {
+                        serverSingleton.broadcast(input);
                     }
-                    for (PrintWriter writer : writers) {
-                        writer.println("MESSAGE " + name + ": " + input);
-                    }
+//                    for (PrintWriter writer : writers) {
+//                        writer.println("MESSAGE " + name + ": " + input);
+//                    }
                 }
             }
         } catch (IOException e) {
