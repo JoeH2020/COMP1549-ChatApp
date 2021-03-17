@@ -19,7 +19,10 @@ public class ServerThread implements ICommunicator, Runnable {
     private Socket socket;
     private Scanner in;
 
+    private HashSet<Member> members;
+
     private ServerSingleton serverSingleton;
+    private boolean isCoordinatorThread = false;
 
 
     public void run() {
@@ -38,20 +41,20 @@ public class ServerThread implements ICommunicator, Runnable {
                 if (name == null) {
                     return;
                 }
-                HashSet<Member> members = serverSingleton.getMembers();
+                members = serverSingleton.getMembers();
                 Member prospectiveMember = new Member(name, socket.getInetAddress().toString(), String.valueOf(socket.getPort()));
                 if (members.isEmpty()) {
                     //This user will become the first coordinator
-                    serverSingleton.setCoordinator(prospectiveMember, out);
+                    serverSingleton.setCoordinator(this);
                     // Communicate to the new coordinator their role
                     out.println("NAMEACCEPTED");
-                    out.println("SETCOORDINATOR");
-                    members.add(prospectiveMember);
+                    addMember(prospectiveMember);
+                    setAsCoordinator();
 
                 } else if (!members.contains(prospectiveMember)) {
                     //Checking if name is not already in names, if not add them
                     out.println("NAMEACCEPTED");
-                    members.add(prospectiveMember);
+                    addMember(prospectiveMember);
                 } else {
                     out.println("NAMEREFUSED");
                 }
@@ -70,10 +73,19 @@ public class ServerThread implements ICommunicator, Runnable {
                     } else if (input.startsWith("ALIVE")) {
                         // when getting an ALIVE response, forward it to the coordinator
                         serverSingleton.getCoordinatorOut().println(input);
+                       if (isCoordinatorThread) {
+                            // if this is the coordinator, tell the server coordinator this thread is alive
+                            serverSingleton.getServerCoordinator().positiveResponse();
+                        }
                     } else if (input.startsWith("TIMEOUT")) {
                         // the coordinator is telling us someone has timed out,
                         // propagate it to everyone else
                         serverSingleton.broadcast(input);
+
+                        // also remove them from server list
+                        String name = input.substring(7);
+                        Member toRemove = new Member(name, null, null);
+                        serverSingleton.removeMember(toRemove);
                     }
                 }
             }
@@ -87,16 +99,19 @@ public class ServerThread implements ICommunicator, Runnable {
         }
     }
 
-
+    private void addMember(Member member) {
+        members.add(member);
+        serverSingleton.addMember(member, this);
+    }
 
     @Override
     public String getTargetIP() {
-        return serverSingleton.getCoordinator().getIP();
+        return socket.getInetAddress().toString();
     }
 
     @Override
     public String getTargetPort() {
-        return serverSingleton.getCoordinator().getPort();
+        return Integer.toString(socket.getPort());
     }
 
     @Override
@@ -106,6 +121,24 @@ public class ServerThread implements ICommunicator, Runnable {
 
     public PrintWriter getPrintWriter() {
         return out;
+    }
+
+    public Member getSelf() {
+        Member m = new Member(getName(), getTargetIP(), getTargetPort());
+        return m;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public PrintWriter getOut() {
+        return out;
+    }
+
+    public void setAsCoordinator() {
+        out.println("SETCOORDINATOR");
+        isCoordinatorThread = true;
     }
 
     public void sendMessage(String message) {}

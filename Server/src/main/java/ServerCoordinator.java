@@ -1,3 +1,4 @@
+import org.apache.maven.settings.Server;
 import org.apache.maven.surefire.shade.org.apache.commons.lang3.ArrayUtils;
 
 import java.io.IOException;
@@ -9,7 +10,7 @@ import java.time.Instant;
 import java.util.Scanner;
 
 public class ServerCoordinator extends Coordinator {
-    public ServerCoordinator(ICommunicator communicator) {
+    public ServerCoordinator(ServerThread communicator) {
         super(communicator);
     }
 
@@ -31,70 +32,42 @@ public class ServerCoordinator extends Coordinator {
     PrintWriter out;
     ServerSocket listener;
 
+    boolean isOnline = false;
+
+    private ServerSingleton serverSingleton = ServerSingleton.getInstance();
 
     @Override
     public void run() {
-        coordinator = new Member("John",targetIP,targetPort);
-        try {
-            listener = new ServerSocket(59001);
-            Socket socket = getClientSocket(listener);
-            in = new Scanner(socket.getInputStream());
-            out = new PrintWriter(socket.getOutputStream(), true);
+        while(true) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) { }
+            System.out.println("Checking on coordinator...");
+            isOnline = false;
+            communicator.sendMessage("CHECKALIVE");
+            try {
+                Thread.sleep(10000);
+            } catch (Exception e) {}
+            if (!isOnline) {
+                System.out.println("Coordinator has timed out");
 
-            out.println(PING_MESSAGE);
-            Instant time1 = Instant.now();
+                // tell everyone the coordinator has timed out
+                serverSingleton.broadcast("TIMEOUT" + communicator.getSelf().getUID());
 
-            while (true) {
-                if (in.hasNextLine() && in.nextLine().equals(PING_CONFIRM)) {
-                    //Coordinator is still alive
-                    System.out.println("Still alive.");
-                    break;
-                } else if (Duration.between(time1, Instant.now()).getSeconds() > TIMEOUT_SECONDS) {
-                    //Coordinator is not responding so we need a new one
-                    try {
-                        socket.close();
-                        //Printing old coordinator's info
-                        System.out.println("Old coordinator is: " + coordinator.getUID()  + " (" + coordinator.getIP() + ":" + coordinator.getPort()+ ")" );
-                        Member[] members = communicator.getMembers();
-
-                        int i = 0;
-                        boolean flag = false;
-                        while (i < members.length) {
-                            if (!members[i].getUID().equals(coordinator.getUID())) {
-                                coordinator.setIP(members[i].getIP());
-                                coordinator.setPort(members[i].getPort());
-                                //coordinator.setUID(members[i].getUID());
-                                //Printing new coordinator's info
-                                System.out.println("New coordinator is: " + coordinator.getUID()  + " (" + coordinator.getIP() + ":" + coordinator.getPort()+ ")" );
-                                flag = true;
-                                break;
-                            }
-                            else {
-                                i++;
-                            }}
-                        //There are no users so no coordinator can be chosen.
-                        if (!flag) {
-                            System.out.println("Not enough users to pick another coordinator");
-                        }
-                        break;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (!(listener.isClosed())) {
-                try {
-                    listener.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+                // select a new coordinator
+                serverSingleton.selectNewCoordinator();
+            }}
     }
+
+    public void setThread(ServerThread c) {
+        this.communicator = c;
+    }
+
+    public void positiveResponse() {
+        System.out.println("Positive response from coordinator");
+        isOnline = true;
+    }
+
 
     protected Socket getClientSocket(ServerSocket listener) {
         try {

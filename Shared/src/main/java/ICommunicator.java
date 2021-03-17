@@ -4,4 +4,5 @@ public interface ICommunicator {
     public String getTargetPort();
     public Member[] getMembers();
     public void sendMessage(String message);
+    public Member getSelf();
 }

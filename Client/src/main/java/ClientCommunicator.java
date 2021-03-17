@@ -114,6 +114,10 @@ public class ClientCommunicator implements ICommunicator {
         return this.members.toArray(new Member[0]);
     }
 
+    public Member getSelf() {
+        return self;
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
             System.err.println("Please specify name and IP.");
