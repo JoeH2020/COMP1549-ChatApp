@@ -52,8 +52,9 @@ public class ClientCommunicator implements ICommunicator {
                         System.exit(0);
                     } else if (line.startsWith("MESSAGE")) {
     //                  Need to call the method to add the user message to the active window
-                        out.println("SYSTEM: CALL METHOD TO APPEND INCOMING MESSAGE");
+                        //out.println("SYSTEM: CALL METHOD TO APPEND INCOMING MESSAGE");
     //                    messageArea.append(line.substring(8) + "\n");
+                        System.out.println(line.substring(7));
                     } else {
                         System.out.println(line);
                     }
@@ -61,8 +62,7 @@ public class ClientCommunicator implements ICommunicator {
 
                 if (userInputQueue.hasItems()) {
                     String item = userInputQueue.nextItem();
-                    System.out.println("Sent message: " + item);
-                    out.println(item);
+                    out.println("MESSAGE" + self.getUID() + ":" + item);
                 }
                 // sleep so that every thread has a chance to run
                 Thread.sleep(500);

@@ -1,5 +1,3 @@
-import org.apache.maven.settings.Server;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -10,17 +8,17 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ServerCommunicator implements ICommunicator, Runnable {
+public class ServerThread implements ICommunicator, Runnable {
 
-    public ServerCommunicator(Socket socket) {
+    public ServerThread(Socket socket) {
         this.socket = socket;
     }
 
     public Member coordinator;
+    private PrintWriter out;
     private String name;
     private Socket socket;
     private Scanner in;
-    private PrintWriter out;
     private Set<String> names = new HashSet<>();
     private Set<PrintWriter> writers = new HashSet<>();
 
@@ -29,6 +27,7 @@ public class ServerCommunicator implements ICommunicator, Runnable {
 
     public void run() {
         serverSingleton = ServerSingleton.getInstance();
+        serverSingleton.addThreadInstance(this);
 
         try {
             System.out.println("New client joined: " + socket.getInetAddress() + ":" + socket.getPort());
@@ -59,20 +58,24 @@ public class ServerCommunicator implements ICommunicator, Runnable {
                     out.println("NAMEREFUSED");
                 }
                 out.println("NAMEACCEPTED");
+                serverSingleton.broadcast("test broadcast");
                 for (PrintWriter writer : writers) {
                     writer.println("MESSAGE " + name + " has joined the chat");
                 }
                 writers.add(out);
+
 
                 // Accept messages from this client and broadcast them.
                 while (true) {
                     String input = in.nextLine();
                     if (input.toLowerCase().startsWith("/quit")) {
                         return;
+                    } else if (input.startsWith("MESSAGE")) {
+                        serverSingleton.broadcast(input);
                     }
-                    for (PrintWriter writer : writers) {
-                        writer.println("MESSAGE " + name + ": " + input);
-                    }
+//                    for (PrintWriter writer : writers) {
+//                        writer.println("MESSAGE " + name + ": " + input);
+//                    }
                 }
             }
         } catch (IOException e) {
@@ -111,12 +114,16 @@ public class ServerCommunicator implements ICommunicator, Runnable {
         return serverSingleton.getMembers().toArray(new Member[0]);
     }
 
+    public PrintWriter getPrintWriter() {
+        return out;
+    }
+
     public static void main(String[] args) {
         System.out.println("Waiting for clients to join...");
         ExecutorService pool = Executors.newFixedThreadPool(500);
         try (ServerSocket listener = new ServerSocket(59001)) {
             while (true) {
-                pool.execute(new ServerCommunicator(listener.accept()));
+                pool.execute(new ServerThread(listener.accept()));
             }
         } catch (IOException e) {
             e.printStackTrace();
