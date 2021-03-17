@@ -14,13 +14,10 @@ public class ServerThread implements ICommunicator, Runnable {
         this.socket = socket;
     }
 
-    public Member coordinator;
     private PrintWriter out;
     private String name;
     private Socket socket;
     private Scanner in;
-    private Set<String> names = new HashSet<>();
-    private Set<PrintWriter> writers = new HashSet<>();
 
     private ServerSingleton serverSingleton;
 
@@ -45,24 +42,20 @@ public class ServerThread implements ICommunicator, Runnable {
                 Member prospectiveMember = new Member(name, socket.getInetAddress().toString(), String.valueOf(socket.getPort()));
                 if (members.isEmpty()) {
                     //This user will become the first coordinator
-                    // out.println("New Coordinator:" + name);
-                    coordinator = prospectiveMember;
+                    serverSingleton.setCoordinator(prospectiveMember, out);
+                    // Communicate to the new coordinator their role
+                    out.println("NAMEACCEPTED");
+                    out.println("SETCOORDINATOR");
                     members.add(prospectiveMember);
 
                 } else if (!members.contains(prospectiveMember)) {
-                    //Checking if name is not already in names
-                    // name = name.substring(0, 1).toUpperCase() + name.substring(1).toLowerCase();
-                    // Capitalising the first letter of their names then adding them
+                    //Checking if name is not already in names, if not add them
+                    out.println("NAMEACCEPTED");
                     members.add(prospectiveMember);
                 } else {
                     out.println("NAMEREFUSED");
                 }
-                out.println("NAMEACCEPTED");
-                serverSingleton.broadcast("test broadcast");
-                for (PrintWriter writer : writers) {
-                    writer.println("MESSAGE " + name + " has joined the chat");
-                }
-                writers.add(out);
+                serverSingleton.broadcast("JOIN" + name);
 
 
                 // Accept messages from this client and broadcast them.
@@ -72,26 +65,23 @@ public class ServerThread implements ICommunicator, Runnable {
                         return;
                     } else if (input.startsWith("MESSAGE")) {
                         serverSingleton.broadcast(input);
+                    } else if (input.startsWith("CHECKALIVE")) {
+                        serverSingleton.broadcast(input);
+                    } else if (input.startsWith("ALIVE")) {
+                        // when getting an ALIVE response, forward it to the coordinator
+                        serverSingleton.getCoordinatorOut().println(input);
+                    } else if (input.startsWith("TIMEOUT")) {
+                        // the coordinator is telling us someone has timed out,
+                        // propagate it to everyone else
+                        serverSingleton.broadcast(input);
                     }
-//                    for (PrintWriter writer : writers) {
-//                        writer.println("MESSAGE " + name + ": " + input);
-//                    }
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (out != null) {
-                writers.remove(out);
-            }
-
-
             if (name != null) {
                 System.out.println(name + " is leaving");
-                names.remove(name);
-                for (PrintWriter writer : writers) {
-                    writer.println("MESSAGE " + name + " has left");
-                }
             }
             try { socket.close(); } catch (IOException e) {}
         }
@@ -101,12 +91,12 @@ public class ServerThread implements ICommunicator, Runnable {
 
     @Override
     public String getTargetIP() {
-        return coordinator.getIP();
+        return serverSingleton.getCoordinator().getIP();
     }
 
     @Override
     public String getTargetPort() {
-        return coordinator.getPort();
+        return serverSingleton.getCoordinator().getPort();
     }
 
     @Override
@@ -117,6 +107,8 @@ public class ServerThread implements ICommunicator, Runnable {
     public PrintWriter getPrintWriter() {
         return out;
     }
+
+    public void sendMessage(String message) {}
 
     public static void main(String[] args) {
         System.out.println("Waiting for clients to join...");

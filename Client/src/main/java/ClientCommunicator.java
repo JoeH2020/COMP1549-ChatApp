@@ -18,6 +18,8 @@ public class ClientCommunicator implements ICommunicator {
     private InputQueue userInputQueue = new InputQueue(System.in);
     private InputQueue serverInputQueue;
 
+    private ClientCoordinator coordinator;
+
 
     public ClientCommunicator(String uniqueID, String selfIP, String selfPort, String serverIP, String serverPort) {
         this.self = new Member(uniqueID, selfIP, selfPort);
@@ -42,19 +44,35 @@ public class ClientCommunicator implements ICommunicator {
     //                  Need to call the method to print out the username here
                         out.println(self.getUID());
                     } else if (line.startsWith("NAMEACCEPTED")) {
-                        //                  Need to call the method to update the GUI window with the username and allow user entry
+                        // Need to call the method to update the GUI window with the username and allow user entry
                         System.out.println("Connected to server.");
-                        //                    this.frame.setTitle("Chatter - " + line.substring(13));
-                        //                    textField.setEditable(true);
                     } else if (line.startsWith("NAMEREFUSED")) {
                         System.out.println("Username is already in use. Please choose a new username.");
                         // Quit the program because the username is specified in command line
                         System.exit(0);
                     } else if (line.startsWith("MESSAGE")) {
-    //                  Need to call the method to add the user message to the active window
-                        //out.println("SYSTEM: CALL METHOD TO APPEND INCOMING MESSAGE");
-    //                    messageArea.append(line.substring(8) + "\n");
+                        // Need to call the method to add the user message to the active window
                         System.out.println(line.substring(7));
+                    } else if (line.startsWith("SETCOORDINATOR")) {
+                        coordinator = new ClientCoordinator(this);
+                        coordinator.start();
+                    } else if (line.startsWith("CHECKALIVE")) {
+                        // this is a ping from the coordinator, respond appropriately
+                        out.println("ALIVE" + self.getUID());
+                    } else if (line.startsWith("ALIVE")) {
+                        if (coordinator != null) coordinator.confirmedAlive(line.substring(5));
+                    } else if (line.startsWith("JOIN")) {
+                        // someone has joined the server, add them to the list
+                        String name = line.substring(4);
+                        System.out.println(name + " has joined the server.");
+                        members.add(new Member(name, null, null));
+                    } else if (line.startsWith("TIMEOUT")) {
+                        // someone has timed out, remove them from the members list
+                        String name = line.substring(7);
+                        Member toRemove = new Member(name, null, null);
+                        members.remove(toRemove);
+                        // now tell the user
+                        System.out.println(name + " has timed out.");
                     } else {
                         System.out.println(line);
                     }
@@ -64,7 +82,8 @@ public class ClientCommunicator implements ICommunicator {
                     String item = userInputQueue.nextItem();
                     out.println("MESSAGE" + self.getUID() + ":" + item);
                 }
-                // sleep so that every thread has a chance to run
+                // if there is nothing to do sleep for a while
+                if (serverInputQueue.hasItems() || userInputQueue.hasItems()) continue;
                 Thread.sleep(500);
             }
         } catch (InterruptedException e) {
@@ -76,6 +95,9 @@ public class ClientCommunicator implements ICommunicator {
         }
     }
 
+    public void sendMessage(String message) {
+        out.println(message);
+    }
 
     @Override
     public String getTargetIP() {
@@ -89,7 +111,7 @@ public class ClientCommunicator implements ICommunicator {
 
     @Override
     public Member[] getMembers() {
-        return (Member[]) this.members.toArray();
+        return this.members.toArray(new Member[0]);
     }
 
     public static void main(String[] args) throws Exception {

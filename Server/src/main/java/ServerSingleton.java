@@ -6,9 +6,6 @@ import java.util.Set;
 // this class stores all the information that is global to the server
 public class ServerSingleton {
     private static ServerSingleton instance;
-    private Set<ServerThread> serverThreads = new HashSet<>();
-
-
 
     public static ServerSingleton getInstance() {
         if (instance == null) {
@@ -16,6 +13,11 @@ public class ServerSingleton {
         }
         return instance;
     }
+
+    private Set<ServerThread> serverThreads = new HashSet<>();
+    private HashSet<Member> members;
+    private Member coordinator;
+    private PrintWriter coordinatorOut;
 
     public void addThreadInstance(ServerThread thread) {
         if (!serverThreads.contains(thread)) {
@@ -31,8 +33,6 @@ public class ServerSingleton {
         }
     }
 
-    private HashSet<Member> members;
-
     private ServerSingleton() {
         this.members = new HashSet<>();
     }
@@ -47,5 +47,16 @@ public class ServerSingleton {
 
     public synchronized void removeMember(Member member) {
         members.remove(member);
+    }
+
+    public synchronized void setCoordinator(Member coordinator, PrintWriter coordinatorOut) {
+        this.coordinator = coordinator;
+        this.coordinatorOut = coordinatorOut;
+    }
+
+    public synchronized Member getCoordinator() { return coordinator; }
+
+    public synchronized PrintWriter getCoordinatorOut() {
+        return coordinatorOut;
     }
 }

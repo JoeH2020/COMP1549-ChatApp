@@ -3,6 +3,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Scanner;
 
 public class ClientCoordinator extends Coordinator {
@@ -11,52 +13,40 @@ public class ClientCoordinator extends Coordinator {
     private final String PING_CONFIRM = "ALIVE";
     private final int TIMEOUT_SECONDS = 5;
     private final String TIMEOUT_MESSAGE = "TIMEOUT";
+    private final int PING_INTERVAL = 10;
 
-    public ClientCoordinator(ICommunicator communicator) {
+    private ArrayList<String> aliveIds = new ArrayList<>();
+    private Member[] allMembers;
+
+    public ClientCoordinator(ClientCommunicator communicator) {
         super(communicator);
+        System.out.println("This client is now the coordinator.");
     }
 
     @Override
     public void run() {
-        // get all the members from the Communicator
-        Member[] members = communicator.getMembers();
-
-        // connect to all members
-        for (Member m: members) {
-            // open the relevant socket
-            try (Socket socket = getSocket(m.getIP(), m.getPort())) {
-                // obtain the relevant IO classes
-                Scanner in = new Scanner(socket.getInputStream());
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-                // send out the message
-                out.println(PING_MESSAGE);
-
-                // record the current time so we know when to time out
-                Instant start = Instant.now();
-
-                // try to get an answer for as long as possible
-                while(true) {
-                    if(in.hasNextLine() && in.nextLine().equals(PING_CONFIRM)) {
-                        // everything is fine
-                        break;
-                    } else if (Duration.between(start, Instant.now()).getSeconds() > TIMEOUT_SECONDS) {
-                        // it's been more than the timeout allows, time to tell the server this client is dead
-                        PrintWriter serverPrintWriter = getServerPrintWriter(communicator.getTargetIP(),
-                                communicator.getTargetPort());
-
-                        // send a timeout message to the server with the user's id
-                        serverPrintWriter.println(TIMEOUT_MESSAGE + m.getUID());
-                        break;
-                    }
+        while(true) {
+            try {
+                Thread.sleep(PING_INTERVAL * 1000);
+            } catch (InterruptedException e) { }
+            // reset the arrayList of people that have confirmed to be alive
+            aliveIds.clear();
+            allMembers = communicator.getMembers();
+            communicator.sendMessage(PING_MESSAGE);
+            try {
+                Thread.sleep(TIMEOUT_SECONDS * 1000);
+            } catch (InterruptedException e) {}
+            for (Member m : allMembers) {
+                if (!aliveIds.contains(m.getUID())) {
+                    // if the member did not return a ping, they timed out
+                    communicator.sendMessage("TIMEOUT" + m.getUID());
                 }
-
-
-            } catch (IOException e) {
-                // this member has timed out
-                e.printStackTrace();
             }
         }
+    }
+
+    public void confirmedAlive(String id) {
+        aliveIds.add(id);
     }
 
     protected PrintWriter getServerPrintWriter(String IP, String port) throws IOException {

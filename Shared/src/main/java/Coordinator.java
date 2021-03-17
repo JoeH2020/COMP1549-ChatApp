@@ -1,4 +1,4 @@
-public abstract class Coordinator implements Runnable {
+public abstract class Coordinator extends Thread {
 
     protected ICommunicator communicator;
 
@@ -6,6 +6,4 @@ public abstract class Coordinator implements Runnable {
         this.communicator = communicator;
     }
 
-    @Override
-    public abstract void run();
 }
