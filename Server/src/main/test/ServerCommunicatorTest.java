@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 public class ServerCommunicatorTest {
 
     @Mock
-    static ServerCommunicator serverCommunicator;
+    static ServerThread serverCommunicator;
 
     @Mock
     static ServerSocket serverSocket;
@@ -31,7 +31,7 @@ public class ServerCommunicatorTest {
     @BeforeAll
     public static void beforeAll() throws IOException {
 
-        serverCommunicator = Mockito.mock(ServerCommunicator.class);
+        serverCommunicator = Mockito.mock(ServerThread.class);
 
         //Creating an array with two 'fake' members.
         members = new Member[3];
