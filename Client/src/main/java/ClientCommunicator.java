@@ -19,6 +19,7 @@ public class ClientCommunicator implements ICommunicator {
     private InputQueue serverInputQueue;
 
     private ClientCoordinator coordinator;
+    private ServerSingleton serverSingleton = ServerSingleton.getInstance();
 
 
     public ClientCommunicator(String uniqueID, String selfIP, String selfPort, String serverIP, String serverPort) {
@@ -73,6 +74,15 @@ public class ClientCommunicator implements ICommunicator {
                         members.remove(toRemove);
                         // now tell the user
                         System.out.println(name + " has timed out.");
+                    }else if (line.startsWith("/WHISPER")) {
+                        //Need to send a message to just one user.
+                        String targetMemberMessage = line.substring(8);
+                        String targetMember = targetMemberMessage.substring(0, targetMemberMessage.indexOf(' ')).trim();
+                        String message = line.substring(targetMember.length() + 8);
+                        serverSingleton.whisper(targetMember, message);
+
+                    }else if (line.startsWith("VIEWMEMBERS")) {
+                        System.out.println("There are "+members.size()+ "current members - "+members);
                     } else {
                         System.out.println(line);
                     }
@@ -80,7 +90,12 @@ public class ClientCommunicator implements ICommunicator {
 
                 if (userInputQueue.hasItems()) {
                     String item = userInputQueue.nextItem();
-                    out.println("MESSAGE" + self.getUID() + ":" + item);
+                    if (!item.startsWith("/WHISPER")) {
+                        out.println("MESSAGE" + self.getUID() + ":" + item);
+                    } else {
+                        out.println("/WHISPER" + self.getUID() + ":" + item.substring(8 + self.getUID().length()));
+                    }
+
                 }
                 // if there is nothing to do sleep for a while
                 if (serverInputQueue.hasItems() || userInputQueue.hasItems()) continue;
@@ -120,7 +135,7 @@ public class ClientCommunicator implements ICommunicator {
 
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
-            System.err.println("Please specify name and IP.");
+            System.err.println("Please specify port and IP.");
             return;
         }
 

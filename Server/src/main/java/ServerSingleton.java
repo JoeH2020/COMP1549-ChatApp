@@ -35,6 +35,11 @@ public class ServerSingleton {
         }
     }
 
+    public void whisper(String targetMember, String msg){
+        ServerThread targetThread = members.get(targetMember);
+        targetThread.getPrintWriter().println(msg);
+    }
+
     public void selectNewCoordinator() {
         // first of all, remove the old coordinator from members
         members.remove(coordinator);
