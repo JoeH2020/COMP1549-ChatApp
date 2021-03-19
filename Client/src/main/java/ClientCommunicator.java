@@ -93,7 +93,7 @@ public class ClientCommunicator implements ICommunicator {
                     if (!item.startsWith("/WHISPER")) {
                         out.println("MESSAGE" + self.getUID() + ":" + item);
                     } else {
-                        out.println("/WHISPER" + self.getUID() + ":" + item.substring(8 + self.getUID().length()));
+                        out.println("/WHISPER" + self.getUID() + ":" + item);
                     }
 
                 }
