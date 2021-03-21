@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Scanner;
 
@@ -74,15 +75,9 @@ public class ClientCommunicator implements ICommunicator {
                         members.remove(toRemove);
                         // now tell the user
                         System.out.println(name + " has timed out.");
-                    }else if (line.startsWith("/WHISPER")) {
+                    }else if (line.startsWith("/WHISPER:")) {
                         //Need to send a message to just one user.
-                        String targetMemberMessage = line.substring(8);
-                        String targetMember = targetMemberMessage.substring(0, targetMemberMessage.indexOf(' ')).trim();
-                        String message = line.substring(targetMember.length() + 8);
-                        serverSingleton.whisper(targetMember, message);
-
-                    }else if (line.startsWith("VIEWMEMBERS")) {
-                        System.out.println("There are "+members.size()+ "current members - "+members);
+                        System.out.println(line);
                     } else {
                         System.out.println(line);
                     }
@@ -90,10 +85,13 @@ public class ClientCommunicator implements ICommunicator {
 
                 if (userInputQueue.hasItems()) {
                     String item = userInputQueue.nextItem();
-                    if (!item.startsWith("/WHISPER")) {
-                        out.println("MESSAGE" + self.getUID() + ":" + item);
+                    if (item.equals("/VIEWMEMBERS")) {
+                        out.println("VIEWMEMBERS");
+                    } else if (item.startsWith("/WHISPER")) {
+                        String a = "/WHISPER:" + self.getUID() + ";" + item.substring(9);
+                        out.println(a);
                     } else {
-                        out.println("/WHISPER" + self.getUID() + ":" + item);
+                        out.println("MESSAGE" + self.getUID() + ":" + item);
                     }
 
                 }

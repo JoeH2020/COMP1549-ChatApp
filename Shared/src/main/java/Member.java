@@ -15,6 +15,7 @@ public class Member {
     public String getUID() {
         return UID;
     }
+    public String toString(){ return this.UID; }
 
     public String getPort() {
         return port;

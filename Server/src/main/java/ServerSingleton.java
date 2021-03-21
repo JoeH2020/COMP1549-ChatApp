@@ -1,8 +1,5 @@
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 // this class stores all the information that is global to the server
 public class ServerSingleton {
@@ -35,9 +32,16 @@ public class ServerSingleton {
         }
     }
 
-    public void whisper(String targetMember, String msg){
-        ServerThread targetThread = members.get(targetMember);
-        targetThread.getPrintWriter().println(msg);
+    public void whisper(String targetMember, String msg, String messageFrom) {
+        Iterator<ServerThread> it = serverThreads.iterator();
+        while (it.hasNext()) {
+            // Compare to only send to specific Thread
+            it.next().getPrintWriter().println("WHISPER from:" + messageFrom + " - " + msg);
+        }
+    }
+
+    public void viewmembers(){
+       broadcast(getMembers().toString());
     }
 
     public void selectNewCoordinator() {
@@ -64,6 +68,7 @@ public class ServerSingleton {
     private ServerSingleton() {
         this.members = new HashMap<>();
     }
+
 
     public  synchronized HashSet<Member> getMembers() {
         return new HashSet<Member>(members.keySet());
@@ -95,4 +100,5 @@ public class ServerSingleton {
     public synchronized PrintWriter getCoordinatorOut() {
         return coordinatorOut;
     }
+
 }

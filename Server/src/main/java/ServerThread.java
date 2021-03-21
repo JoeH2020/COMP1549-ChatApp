@@ -68,6 +68,14 @@ public class ServerThread implements ICommunicator, Runnable {
                         return;
                     } else if (input.startsWith("MESSAGE")) {
                         serverSingleton.broadcast(input);
+                    } else if (input.startsWith("VIEWMEMBERS")) {
+                        serverSingleton.viewmembers();
+                    } else if (input.startsWith("/WHISPER:")) {
+                        String targetMemberMessage = input.substring(9);
+                        String messageFrom = targetMemberMessage.substring(0, targetMemberMessage.indexOf(';')).trim();
+                        String targetMember = targetMemberMessage.substring(messageFrom.length() + 1, targetMemberMessage.indexOf(' ')).trim();
+                        String message = input.substring(messageFrom.length() + 2 + targetMember.length() + 9);
+                        serverSingleton.whisper(targetMember, message, messageFrom);
                     } else if (input.startsWith("CHECKALIVE")) {
                         serverSingleton.broadcast(input);
                     } else if (input.startsWith("ALIVE")) {
@@ -135,6 +143,7 @@ public class ServerThread implements ICommunicator, Runnable {
     public PrintWriter getOut() {
         return out;
     }
+
 
     public void setAsCoordinator() {
         out.println("SETCOORDINATOR");
