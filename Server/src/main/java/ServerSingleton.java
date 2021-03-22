@@ -1,4 +1,6 @@
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.*;
 
 // this class stores all the information that is global to the server
@@ -32,15 +34,22 @@ public class ServerSingleton {
         }
     }
 
+    public String returnTime(){
+        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
+        Date date;
+        date = new Date(System.currentTimeMillis());
+        return formatter.format(date);
+    }
+
+
     public void whisper(String targetMember, String msg, String messageFrom) {
         Iterator<ServerThread> it = serverThreads.iterator();
-
         while (it.hasNext()) {
             ServerThread currentThread = it.next();
             String compare = currentThread.getName();
             // Compare to only send to specific Thread
             if (compare.equals(targetMember) ) {
-                currentThread.getPrintWriter().println("WHISPER:" + messageFrom + " - " + msg);
+                currentThread.getPrintWriter().println("["+returnTime()+"]"+"WHISPER:" + messageFrom + " - " + msg);
             }
          }
     }

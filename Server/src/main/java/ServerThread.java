@@ -61,7 +61,6 @@ public class ServerThread implements ICommunicator, Runnable {
                 serverSingleton.broadcast("JOIN" + name);
                 serverSingleton.return_to_self("Online Members List: "+serverSingleton.returnMembers(), prospectiveMember.toString());
 
-
                 // Accept messages from this client and broadcast them.
                 while (true) {
                     String input = in.nextLine();
