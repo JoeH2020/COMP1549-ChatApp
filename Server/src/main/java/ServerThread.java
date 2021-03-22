@@ -69,7 +69,7 @@ public class ServerThread implements ICommunicator, Runnable {
                     } else if (input.startsWith("MESSAGE")) {
                         serverSingleton.broadcast(input);
                     } else if (input.startsWith("VIEWMEMBERS")) {
-                        serverSingleton.viewmembers();
+                        serverSingleton.viewmembers(input.substring(11));
                     } else if (input.startsWith("/WHISPER:")) {
                         String targetMemberMessage = input.substring(9);
                         String messageFrom = targetMemberMessage.substring(0, targetMemberMessage.indexOf(';')).trim();

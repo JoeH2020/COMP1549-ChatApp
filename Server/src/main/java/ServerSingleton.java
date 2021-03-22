@@ -34,14 +34,33 @@ public class ServerSingleton {
 
     public void whisper(String targetMember, String msg, String messageFrom) {
         Iterator<ServerThread> it = serverThreads.iterator();
+
         while (it.hasNext()) {
+            ServerThread currentThread = it.next();
+            String compare = currentThread.getName();
             // Compare to only send to specific Thread
-            it.next().getPrintWriter().println("WHISPER from:" + messageFrom + " - " + msg);
+            if (compare.equals(targetMember) ) {
+                currentThread.getPrintWriter().println("WHISPER from:" + messageFrom + " - " + msg);
+            }
+         }
+    }
+
+    public void return_to_self(String message, String UID){
+        Iterator<ServerThread> it = serverThreads.iterator();
+
+        while (it.hasNext()) {
+            ServerThread currentThread = it.next();
+            String compare = currentThread.getName();
+            // Compare to only send to specific Thread
+            if (compare.equals(UID) ) {
+                currentThread.getPrintWriter().println(message);
+            }
         }
     }
 
-    public void viewmembers(){
-       broadcast(getMembers().toString());
+
+    public void viewmembers(String UID){
+       return_to_self(getMembers().toString(), UID);
     }
 
     public void selectNewCoordinator() {
