@@ -8,16 +8,17 @@ import java.util.Scanner;
 public class InputQueue {
     LinkedList<String> inputQueue = new LinkedList<>();
     Thread t;
+    Scanner in;
 
     public InputQueue(InputStream inputStream) {
         t = new Thread() {
             public void run() {
-                Scanner in = new Scanner(inputStream);
+                in = new Scanner(inputStream);
                 while(true) {
                     if (in.hasNextLine())
                         inputQueue.add(in.nextLine());
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
 
                     }
