@@ -59,6 +59,7 @@ public class ServerThread implements ICommunicator, Runnable {
                     out.println("NAMEREFUSED");
                 }
                 serverSingleton.broadcast("JOIN" + name);
+                serverSingleton.return_to_self("Online Members List: "+serverSingleton.returnMembers(), prospectiveMember.toString());
 
 
                 // Accept messages from this client and broadcast them.
@@ -67,7 +68,7 @@ public class ServerThread implements ICommunicator, Runnable {
                     if (input.toLowerCase().startsWith("/quit")) {
                         return;
                     } else if (input.startsWith("MESSAGE")) {
-                        serverSingleton.broadcast(input);
+                        serverSingleton.broadcast( input);
                     } else if (input.startsWith("VIEWMEMBERS")) {
                         serverSingleton.viewmembers(input.substring(11));
                     } else if (input.startsWith("/WHISPER:")) {

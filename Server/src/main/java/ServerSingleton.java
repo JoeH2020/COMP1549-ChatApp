@@ -40,7 +40,7 @@ public class ServerSingleton {
             String compare = currentThread.getName();
             // Compare to only send to specific Thread
             if (compare.equals(targetMember) ) {
-                currentThread.getPrintWriter().println("WHISPER from:" + messageFrom + " - " + msg);
+                currentThread.getPrintWriter().println("WHISPER:" + messageFrom + " - " + msg);
             }
          }
     }
@@ -61,6 +61,10 @@ public class ServerSingleton {
 
     public void viewmembers(String UID){
        return_to_self(getMembers().toString(), UID);
+    }
+
+    public String returnMembers(){
+        return getMembers().toString();
     }
 
     public void selectNewCoordinator() {
