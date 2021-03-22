@@ -2,12 +2,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Scanner;
 
 public class ClientCommunicator implements ICommunicator {
 
+    SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+    private Date date;
     private static String serverPort;
     public Member self;
     public String serverIP;
@@ -41,6 +45,7 @@ public class ClientCommunicator implements ICommunicator {
 
             while (true) {
                 if(serverInputQueue.hasItems()) {
+                    date = new Date(System.currentTimeMillis());
                     String line = serverInputQueue.nextItem();
                     if (line.startsWith("SUBMITNAME")) {
     //                  Need to call the method to print out the username here
@@ -54,7 +59,7 @@ public class ClientCommunicator implements ICommunicator {
                         System.exit(0);
                     } else if (line.startsWith("MESSAGE")) {
                         // Need to call the method to add the user message to the active window
-                        System.out.println(line.substring(7));
+                        System.out.println("[%s] %s".formatted(formatter.format(date),line.substring(7)));
                     } else if (line.startsWith("SETCOORDINATOR")) {
                         coordinator = new ClientCoordinator(this);
                         coordinator.start();
