@@ -38,6 +38,12 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>2.22.2</version>
         </dependency>
+        <dependency>
+            <groupId>uni</groupId>
+            <artifactId>Server</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <properties>
