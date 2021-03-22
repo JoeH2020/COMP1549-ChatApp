@@ -86,7 +86,7 @@ public class ClientCommunicator implements ICommunicator {
                 if (userInputQueue.hasItems()) {
                     String item = userInputQueue.nextItem();
                     if (item.equals("/VIEWMEMBERS")) {
-                        out.println("VIEWMEMBERS:"+self.getUID());
+                        out.println("VIEWMEMBERS"+self.getUID());
                     } else if (item.startsWith("/WHISPER")) {
                         String a = "/WHISPER:" + self.getUID() + ";" + item.substring(9);
                         out.println(a);
