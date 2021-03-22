@@ -77,90 +77,102 @@ public class ClientCoordinatorTest {
     }
 
     @Test
-    public void membersSendOtherMessagesBeforeConfirming() {
-        // these Input/Output streams allow us to write/read what the ClientCoordinator read/writes from the socket
-        ByteArrayInputStream member1InputStream = new ByteArrayInputStream(
-                ("SOME RANDOM STUFF\n" + PING_CONFIRM).getBytes());
-        ByteArrayInputStream member2InputStream = new ByteArrayInputStream(
-                ("OTHER RANDOM STUFF\n" + PING_CONFIRM).getBytes());
-        ByteArrayOutputStream member1OutputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream member2OutputStream = new ByteArrayOutputStream();
+    public void cyclicalCheckAliveTest() throws InterruptedException {
+        // ping interval is 10 seconds, let's check that the sendMessage is called every 10 seconds
+        // with the message CHECKALIVE
 
-        // here the mock sockets is configured to return the above streams, whereas the normal socket would return
-        // the proper streams
-        try {
-            when(socket.getInputStream()).thenReturn(member1InputStream, member2InputStream);
-            when(socket.getOutputStream()).thenReturn(member1OutputStream, member2OutputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // first run the coordinator
+        clientCoordinator.start();
 
-        clientCoordinator.run();
+        // then wait the 10 seconds
+        Thread.sleep(10 * 1000);
 
-        // there should be no timeout messages sent to the server
-        assertEquals("", serverOutputStream.toString());
+        // now let's check
+        Mockito.verify(clientCommunicator, Mockito.times(1)).sendMessage("CHECKALIVE");
+
+        // let's wait another 10 seconds and check again
+        Thread.sleep(10 * 1000);
+
+        // this time it should have been called twice (previous time and now)
+        Mockito.verify(clientCommunicator, Mockito.times(1)).sendMessage("CHECKALIVE");
     }
 
     @Test
-    public void everythingFine() {
-        ByteArrayInputStream member1InputStream = new ByteArrayInputStream(PING_CONFIRM.getBytes());
-        ByteArrayInputStream member2InputStream = new ByteArrayInputStream(PING_CONFIRM.getBytes());
-        ByteArrayOutputStream member1OutputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream member2OutputStream = new ByteArrayOutputStream();
+    public void everythingFine() throws InterruptedException {
+        // let's test what happens if two members are alive and well
 
-        try {
-            when(socket.getInputStream()).thenReturn(member1InputStream, member2InputStream);
-            when(socket.getOutputStream()).thenReturn(member1OutputStream, member2OutputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // first let's make a fake list with two members
+        Member m1 = new Member("Steve", "128.123.123.123", "56001");
+        Member m2 = new Member("Paul", "123.13.123.123", "56001");
+        Member[] members = {m1, m2};
 
-        clientCoordinator.run();
+        // now let's tell clientCommunicator to return this list when requested
+        when(clientCommunicator.getMembers()).thenReturn(members);
 
-        assertEquals("", serverOutputStream.toString());
+        // now run the coordinator
+        clientCoordinator.start();
+
+        // let's wait 11 seconds, then tell the coordinator both members are alive
+        Thread.sleep(11 * 1000);
+        clientCoordinator.confirmedAlive(m1.getUID());
+        clientCoordinator.confirmedAlive(m2.getUID());
+
+        // now let's make sure that the clientCommunicator.sendMessage method
+        // was never called to communicate a timeout
+        Mockito.verify(clientCommunicator, Mockito.times(0)).sendMessage("TIMEOUT" + m1.getUID());
+        Mockito.verify(clientCommunicator, Mockito.times(0)).sendMessage("TIMEOUT" + m2.getUID());
     }
 
     @Test
-    public void oneMemberHasTimedOut() {
-        ByteArrayInputStream member1InputStream = new ByteArrayInputStream(new byte[0]);
-        ByteArrayInputStream member2InputStream = new ByteArrayInputStream(PING_CONFIRM.getBytes());
-        ByteArrayOutputStream member1OutputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream member2OutputStream = new ByteArrayOutputStream();
+    public void oneMemberHasTimedOut() throws InterruptedException {
+        // let's test what happens if one of the members times out
 
-        try {
-            when(socket.getInputStream()).thenReturn(member1InputStream, member2InputStream);
-            when(socket.getOutputStream()).thenReturn(member1OutputStream, member2OutputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // first let's make a fake list with two members
+        Member m1 = new Member("Steve", "128.123.123.123", "56001");
+        Member m2 = new Member("Paul", "123.13.123.123", "56001");
+        Member[] members = {m1, m2};
 
-        clientCoordinator.run();
+        // now let's tell clientCommunicator to return this list when requested
+        when(clientCommunicator.getMembers()).thenReturn(members);
 
-        String serverOutput = serverOutputStream.toString();
+        // now run the coordinator
+        clientCoordinator.start();
 
-        assertEquals(TIMEOUT_MESSAGE + members[0].getUID(), serverOutput.strip());
+        // let's wait 11 seconds, then tell the coordinator only m1 is alive
+        // then wait 5 more seconds to make sure m2 times out
+        Thread.sleep(11 * 1000);
+        clientCoordinator.confirmedAlive(m1.getUID());
+        Thread.sleep(5 * 1000);
+
+        // now let's make sure that the clientCommunicator.sendMessage method
+        // was called once and only once for m2
+        Mockito.verify(clientCommunicator, Mockito.times(0)).sendMessage("TIMEOUT" + m1.getUID());
+        Mockito.verify(clientCommunicator, Mockito.times(1)).sendMessage("TIMEOUT" + m2.getUID());
     }
 
     @Test
-    public void bothMembersHaveTimedOut() {
-        ByteArrayInputStream member1InputStream = new ByteArrayInputStream(new byte[0]);
-        ByteArrayInputStream member2InputStream = new ByteArrayInputStream("Interrupted messa".getBytes());
-        ByteArrayOutputStream member1OutputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream member2OutputStream = new ByteArrayOutputStream();
+    public void bothMembersHaveTimedOut() throws InterruptedException {
+        // let's test what happens if both members time out
 
-        try {
-            when(socket.getInputStream()).thenReturn(member1InputStream, member2InputStream);
-            when(socket.getOutputStream()).thenReturn(member1OutputStream, member2OutputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // first let's make a fake list with two members
+        Member m1 = new Member("Steve", "128.123.123.123", "56001");
+        Member m2 = new Member("Paul", "123.13.123.123", "56001");
+        Member[] members = {m1, m2};
 
-        clientCoordinator.run();
+        // now let's tell clientCommunicator to return this list when requested
+        when(clientCommunicator.getMembers()).thenReturn(members);
 
-        String serverOutput = serverOutputStream.toString();
+        // now run the coordinator
+        clientCoordinator.start();
 
-        assertEquals(TIMEOUT_MESSAGE + members[0].getUID() + "\n" + TIMEOUT_MESSAGE + members[1].getUID(),
-                serverOutput.strip());
+        // let's wait 16 seconds, enough time for the first request to go out and for both members to time out
+        Thread.sleep(16 * 1000);
+
+        // now let's make sure that the clientCommunicator.sendMessage method
+        // was called once and only once for each of the two members
+        Mockito.verify(clientCommunicator, Mockito.times(1)).sendMessage("TIMEOUT" + m1.getUID());
+        Mockito.verify(clientCommunicator, Mockito.times(1)).sendMessage("TIMEOUT" + m2.getUID());
+
     }
 
 }
