@@ -1,21 +1,23 @@
-import org.apache.maven.settings.Server;
+import junit.framework.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.w3c.dom.ls.LSOutput;
 
 import java.io.*;
+import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
+import java.util.HashSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.when;
 
-public class ServerCommunicatorTest {
+public class ServerThreadTest {
 
     @Mock
     static ServerThread serverCommunicator;
@@ -46,7 +48,7 @@ public class ServerCommunicatorTest {
         when(serverCommunicator.getMembers()).thenReturn(members);
 
         ServerSocket serverSocket = Mockito.mock(ServerSocket.class);
-        Socket socket = Mockito.mock(Socket.class);
+//        Socket socket = Mockito.mock(Socket.class);
 
         serverCoordinator = new ServerCoordinator(serverCommunicator) {
             @Override
@@ -56,7 +58,7 @@ public class ServerCommunicatorTest {
 
         //in = new Scanner(socket.getInputStream());
         //out = new PrintWriter(socket.getOutputStream(), true);
-        when(socket.getOutputStream()).thenReturn(serverOutputStream);
+//        when(socket.getOutputStream()).thenReturn(serverOutputStream);
 
     }
 
@@ -66,34 +68,175 @@ public class ServerCommunicatorTest {
     public void beforeEach() {
         // empty the serverOutputStream
         serverOutputStream.reset();
+
+        // reset the serverSingleton
+        ServerSingleton.reset();
+    }
+
+    /*
+    CONNECTION TESTS
+     */
+
+    @Test
+    public void firstMember() throws IOException, InterruptedException {
+        // this test makes sure that the first member is appropriately
+        // connected and set as coordinator
+
+        // first mock the socket so that it returns our OutputStream when requested
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Socket socket = Mockito.mock(Socket.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+
+        // now create an appropriate InputStream for the class to work properly
+        // the class requests the name
+        String input = "Paul\n";
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        when(socket.getInputStream()).thenReturn(inputStream);
+
+        // also mock getInetAddress and getPort for everything to work
+        when(socket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
+        when(socket.getPort()).thenReturn(7738);
+
+        // now run the class
+        ServerThread thread = new ServerThread(socket);
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(thread);
+
+        // wait a bit for everything to work
+        Thread.sleep(1000);
+
+        String expectedOutput = "SUBMITNAME\nNAMEACCEPTED\nSETCOORDINATOR\nJOINPaul\nOnline Members List: [Paul]\n";
+        Assert.assertEquals(expectedOutput, outputStream.toString());
+
     }
 
     @Test
-    public void joiningRoom() {
-        String name;
-        name = "name";
+    public void secondMember() throws IOException, InterruptedException {
+        // this method tests all subsequent connections, which should not be set as coordinators
 
-        socket = serverCoordinator.getClientSocket(serverSocket);
-        ByteArrayInputStream coordinatorInputStream = new ByteArrayInputStream((name).getBytes(StandardCharsets.UTF_8));
-        ByteArrayOutputStream coordinatorOutputStream = new ByteArrayOutputStream();
+        // first mock the socket so that it returns our OutputStream when requested
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Socket socket = Mockito.mock(Socket.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
 
-        try {
-            when(socket.getInputStream()).thenReturn(coordinatorInputStream);
-            when(socket.getOutputStream()).thenReturn(coordinatorOutputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // now create an appropriate InputStream for the class to work properly
+        // the class requests the name
+        String input = "Second\n";
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        when(socket.getInputStream()).thenReturn(inputStream);
+
+        // also mock getInetAddress and getPort for everything to work
+        when(socket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
+        when(socket.getPort()).thenReturn(7738);
+
+        // finally set up the server singleton to return existing members
+        ServerSingleton singleton = ServerSingleton.getInstance();
+        singleton.addMember(new Member("Paul", null, null), null);
+
+        // now run the class
+        ServerThread thread = new ServerThread(socket);
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(thread);
+
+        // wait a bit for everything to work
+        Thread.sleep(1000);
+
+        String expectedOutput = "SUBMITNAME\nNAMEACCEPTED\nJOINSecond\nOnline Members List: [Paul, Second]\n";
+        Assert.assertEquals(expectedOutput, outputStream.toString());
+
     }
 
     @Test
-    public void leavingRoom() {
-        //Test when a person wants to leave the chat room
+    public void secondMemberWithExistingName() throws IOException, InterruptedException {
+        // this method tests if members that try to login with existing names get rejected
 
+        // first mock the socket so that it returns our OutputStream when requested
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Socket socket = Mockito.mock(Socket.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+
+        // now create an appropriate InputStream for the class to work properly
+        // the class requests the name
+        String input = "Paul\n";
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        when(socket.getInputStream()).thenReturn(inputStream);
+
+        // also mock getInetAddress and getPort for everything to work
+        when(socket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
+        when(socket.getPort()).thenReturn(7738);
+
+        // finally set up the server singleton to return existing members
+        ServerSingleton singleton = ServerSingleton.getInstance();
+        singleton.addMember(new Member("Paul", null, null), null);
+
+        // now run the class
+        ServerThread thread = new ServerThread(socket);
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(thread);
+
+        // wait a bit for everything to work
+        Thread.sleep(1000);
+
+        String expectedOutput = "SUBMITNAME\nNAMEACCEPTED\nSETCOORDINATOR\nJOINPaul\nOnline Members List: [Paul]\n";
+        Assert.assertEquals(expectedOutput, outputStream.toString());
     }
 
+    /*
+    INPUT TESTS
+     */
     @Test
-    public void messageSent() {
-        //Test that a person can actually send a message
+    public void message() throws IOException, InterruptedException, NoSuchFieldException, IllegalAccessException {
+        // this test makes sure that messages are propagated
 
+        // we need to mock the singleton for this
+        ServerSingleton singleton = Mockito.mock(ServerSingleton.class);
+        when(singleton.getMembers()).thenReturn(new HashSet<Member>());
+        when(singleton.getTime()).thenReturn("1500");
+
+        // now we need to make sure the actual singleton class returns this instance when asked
+        // there is no way other than reflections to do this (without PowerMockito)
+        Class singletonClass = ServerSingleton.class;
+        Field instanceField = singletonClass.getDeclaredField("instance");
+        instanceField.setAccessible(true);
+        instanceField.set(null, singleton);
+
+
+        // mock the socket so that it returns our OutputStream when requested
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Socket socket = Mockito.mock(Socket.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+
+        // now create an appropriate InputStream for the class to work properly
+        // the class requests the name
+        String input = "Paul\nMESSAGEHello World\n";
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        when(socket.getInputStream()).thenReturn(inputStream);
+
+        // also mock getInetAddress and getPort for everything to work
+        when(socket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
+        when(socket.getPort()).thenReturn(7738);
+
+        // now run the class
+        ServerThread thread = new ServerThread(socket);
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(thread);
+
+        // wait a bit for everything to work
+        Thread.sleep(1000);
+
+        // make sure the broadcast method has been called with the hello world message
+        Mockito.verify(singleton, Mockito.times(1)).broadcast("JOINPaul");
+        Mockito.verify(singleton, Mockito.times(1)).broadcast("MESSAGE1500Hello World");
     }
+
+    /*
+    TODO
+    test all keywords:
+    VIEWMEMBERS
+    WHISPER
+    CHECKALIVE
+    ALIVE
+    TIMEOUT
+    DISCONNECTED
+     */
 }
