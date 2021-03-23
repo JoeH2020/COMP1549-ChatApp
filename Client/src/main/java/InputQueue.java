@@ -3,7 +3,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
 
-// This class has the purpose of reading and storing user input, so that callin Scanner.nextLine() doesn't freeze
+// This class has the purpose of reading and storing user input, so that calling Scanner.nextLine() doesn't freeze
 // the whole program
 public class InputQueue {
     LinkedList<String> inputQueue = new LinkedList<>();

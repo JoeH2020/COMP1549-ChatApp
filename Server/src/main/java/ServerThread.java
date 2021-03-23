@@ -102,7 +102,15 @@ public class ServerThread implements ICommunicator, Runnable {
                         String name = input.substring(12);
                         Member toRemove = new Member(name, null, null);
                         serverSingleton.removeMember(toRemove);
+                    }
+                    else if (!socket.isConnected()){
+                        // the socket has been disconnected so we remove client and inform everyone else
+                        serverSingleton.broadcast("DISCONNECTED"+ prospectiveMember);
 
+                        // also remove them from server list
+                        String name = input.substring(12);
+                        Member toRemove = new Member(name, null, null);
+                        serverSingleton.removeMember(toRemove);
                     }
                 }
             }
@@ -115,6 +123,7 @@ public class ServerThread implements ICommunicator, Runnable {
             try { socket.close(); } catch (IOException e) {}
         }
     }
+
 
     private void addMember(Member member) {
         members.add(member);

@@ -47,9 +47,6 @@ public class ClientCoordinator extends Coordinator {
     }
 
 
-    public void sendDisconnect(String id) {
-        communicator.sendMessage("DISCONNECTED" + id);
-    }
 
     public void confirmedAlive(String id) {
         aliveIds.add(id);
