@@ -68,7 +68,7 @@ public class ServerSingleton {
     }
 
 
-    public void viewmembers(String UID){
+    public void viewMembers(String UID){
        return_to_self(getMembers().toString(), UID);
     }
 

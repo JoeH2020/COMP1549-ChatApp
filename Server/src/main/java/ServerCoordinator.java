@@ -33,21 +33,24 @@ public class ServerCoordinator extends Coordinator {
     ServerSocket listener;
 
     boolean isOnline = false;
+    boolean isDisconnected = false;
 
     private ServerSingleton serverSingleton = ServerSingleton.getInstance();
 
     @Override
     public void run() {
-        while(true) {
+        while (true) {
             try {
                 Thread.sleep(5000);
-            } catch (InterruptedException e) { }
+            } catch (InterruptedException e) {
+            }
             System.out.println("Checking on coordinator...");
             isOnline = false;
             communicator.sendMessage("CHECKALIVE");
             try {
                 Thread.sleep(10000);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
             if (!isOnline) {
                 System.out.println("Coordinator has timed out");
 
@@ -56,7 +59,19 @@ public class ServerCoordinator extends Coordinator {
 
                 // select a new coordinator
                 serverSingleton.selectNewCoordinator();
-            }}
+            }
+//            TODO: Add in code to determine if coordinator has disconnected
+            isDisconnected = false;
+            if (isDisconnected) {
+                System.out.println("Coordinator has disconnected");
+
+                // tell everyone the coordinator has disconnected
+                serverSingleton.broadcast("DISCONNECTED" + communicator.getSelf().getUID());
+
+                // select a new coordinator
+                serverSingleton.selectNewCoordinator();
+            }
+        }
     }
 
     public void setThread(ServerThread c) {

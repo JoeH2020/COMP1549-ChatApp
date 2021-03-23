@@ -77,6 +77,13 @@ public class ClientCommunicator implements ICommunicator {
                         members.remove(toRemove);
                         // now tell the user
                         System.out.println(name + " has timed out.");
+                    } else if (line.startsWith("DISCONNECTED")) {
+                        // someone has disconnected, remove from members and inform users
+                        String name = line.substring(12);
+                        Member toRemove = new Member(name, null, null);
+                        members.remove(toRemove);
+                        // now tell the user
+                        System.out.println(name + " has disconnected.");
                     } else {
                         System.out.println(line);
                     }

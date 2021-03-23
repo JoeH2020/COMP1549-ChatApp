@@ -14,6 +14,7 @@ public class ClientCoordinator extends Coordinator {
     private final int TIMEOUT_SECONDS = 5;
     private final String TIMEOUT_MESSAGE = "TIMEOUT";
     private final int PING_INTERVAL = 10;
+    private final String DISCONNECT_MESSAGE = "DISCONNECT";
 
     private ArrayList<String> aliveIds = new ArrayList<>();
     private Member[] allMembers;
@@ -43,6 +44,11 @@ public class ClientCoordinator extends Coordinator {
                 }
             }
         }
+    }
+
+
+    public void sendDisconnect(String id) {
+        communicator.sendMessage("DISCONNECTED" + id);
     }
 
     public void confirmedAlive(String id) {

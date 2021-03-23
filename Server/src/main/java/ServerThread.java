@@ -4,7 +4,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashSet;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -69,7 +68,7 @@ public class ServerThread implements ICommunicator, Runnable {
                     } else if (input.startsWith("MESSAGE")) {
                         serverSingleton.broadcast( input);
                     } else if (input.startsWith("VIEWMEMBERS")) {
-                        serverSingleton.viewmembers(input.substring(11));
+                        serverSingleton.viewMembers(input.substring(11));
                     } else if (input.startsWith("/WHISPER:")) {
                         String targetMemberMessage = input.substring(9);
                         String messageFrom = targetMemberMessage.substring(0, targetMemberMessage.indexOf(';')).trim();
@@ -94,6 +93,16 @@ public class ServerThread implements ICommunicator, Runnable {
                         String name = input.substring(7);
                         Member toRemove = new Member(name, null, null);
                         serverSingleton.removeMember(toRemove);
+                    } else if (input.startsWith("DISCONNECTED")) {
+                        // the coordinator is telling us someone has disconnected,
+                        // propagate it to everyone else
+                        serverSingleton.broadcast(input);
+
+                        // also remove them from server list
+                        String name = input.substring(12);
+                        Member toRemove = new Member(name, null, null);
+                        serverSingleton.removeMember(toRemove);
+
                     }
                 }
             }
