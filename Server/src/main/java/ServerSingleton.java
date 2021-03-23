@@ -34,8 +34,8 @@ public class ServerSingleton {
         }
     }
 
-    public String returnTime(){
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
+    public String getTime(){
+        SimpleDateFormat formatter = new SimpleDateFormat("HHmm");
         Date date;
         date = new Date(System.currentTimeMillis());
         return formatter.format(date);
@@ -43,15 +43,9 @@ public class ServerSingleton {
 
 
     public void whisper(String targetMember, String msg, String messageFrom) {
-        Iterator<ServerThread> it = serverThreads.iterator();
-        while (it.hasNext()) {
-            ServerThread currentThread = it.next();
-            String compare = currentThread.getName();
-            // Compare to only send to specific Thread
-            if (compare.equals(targetMember) ) {
-                currentThread.getPrintWriter().println("["+returnTime()+"]"+"WHISPER:" + messageFrom + " - " + msg);
-            }
-         }
+        ServerThread targetThread = members.get(new Member(targetMember, null, null));
+        String toSend = "WHISPER" + getTime() + messageFrom + ":" + msg;
+        targetThread.getPrintWriter().println(toSend);
     }
 
     public void return_to_self(String message, String UID){
@@ -132,5 +126,7 @@ public class ServerSingleton {
     public synchronized PrintWriter getCoordinatorOut() {
         return coordinatorOut;
     }
+
+    public static synchronized void reset() { instance = null; }
 
 }

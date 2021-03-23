@@ -22,7 +22,6 @@ public class ClientCommunicator implements ICommunicator {
     private InputQueue serverInputQueue;
 
     private ClientCoordinator coordinator;
-    private ServerSingleton serverSingleton = ServerSingleton.getInstance();
 
 
     public ClientCommunicator(String uniqueID, String selfIP, String selfPort, String serverIP, String serverPort) {
@@ -45,7 +44,7 @@ public class ClientCommunicator implements ICommunicator {
                 if(serverInputQueue.hasItems()) {
                     String line = serverInputQueue.nextItem();
                     if (line.startsWith("SUBMITNAME")) {
-    //                  Need to call the method to print out the username here
+                        //                  Need to call the method to print out the username here
                         out.println(self.getUID());
                     } else if (line.startsWith("NAMEACCEPTED")) {
                         // Need to call the method to update the GUI window with the username and allow user entry
@@ -56,7 +55,11 @@ public class ClientCommunicator implements ICommunicator {
                         System.exit(0);
                     } else if (line.startsWith("MESSAGE")) {
                         // Need to call the method to add the user message to the active window
-                        System.out.println("[%s]%s".formatted(serverSingleton.returnTime(),line.substring(7)));
+                        String time = line.substring(7, 11);
+                        String hours = time.substring(0, 2);
+                        String minutes = time.substring(2);
+                        String message = line.substring(11);
+                        System.out.println("[%s:%s] %s".formatted(hours, minutes, message));
                     } else if (line.startsWith("SETCOORDINATOR")) {
                         coordinator = new ClientCoordinator(this);
                         coordinator.start();
@@ -84,6 +87,17 @@ public class ClientCommunicator implements ICommunicator {
                         members.remove(toRemove);
                         // now tell the user
                         System.out.println(name + " has disconnected.");
+                    } else if (line.startsWith("WHISPER")) {
+                        String[] lineArray = line.split(":");
+                        String time = lineArray[0].substring(7, 11);
+                        String hours = time.substring(0, 2);
+                        String minutes = time.substring(2);
+                        String sender = lineArray[0].substring(11);
+                        // need to do this in case message has colons
+                        String[] messageArray = Arrays.copyOfRange(lineArray, 1, lineArray.length);
+                        String message = String.join(":", messageArray);
+                        String toPrint = "[%s:%s] %s whispered: %s".formatted(hours, minutes, sender, message);
+                        System.out.println(toPrint);
                     } else {
                         System.out.println(line);
                     }
@@ -94,8 +108,13 @@ public class ClientCommunicator implements ICommunicator {
                     if (item.equals("/VIEWMEMBERS")) {
                         out.println("VIEWMEMBERS"+self.getUID());
                     } else if (item.startsWith("/WHISPER")) {
-                        String a = "/WHISPER:" + self.getUID() + ";" + item.substring(9);
-                        out.println(a);
+                        String[] words = item.split(" ");
+                        String to = words[1];
+                        String[] messageArray = Arrays.copyOfRange(words, 2, words.length);
+                        String message = String.join(" ", messageArray);
+                        String toSend = "WHISPER" + to + ":" + message;
+                        out.println(toSend);
+                        System.out.println("Whispered to %s: %s".formatted(to, message));
                     } else {
                         out.println("MESSAGE" + self.getUID() + ":" + item);
                     }

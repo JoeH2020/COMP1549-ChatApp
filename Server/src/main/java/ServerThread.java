@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -20,7 +21,7 @@ public class ServerThread implements ICommunicator, Runnable {
 
     private HashSet<Member> members;
 
-    private ServerSingleton serverSingleton;
+    protected ServerSingleton serverSingleton;
     private boolean isCoordinatorThread = false;
 
 
@@ -56,6 +57,7 @@ public class ServerThread implements ICommunicator, Runnable {
                     addMember(prospectiveMember);
                 } else {
                     out.println("NAMEREFUSED");
+                    return;
                 }
                 serverSingleton.broadcast("JOIN" + name);
                 serverSingleton.return_to_self("Online Members List: "+serverSingleton.returnMembers(), prospectiveMember.toString());
@@ -66,15 +68,20 @@ public class ServerThread implements ICommunicator, Runnable {
                     if (input.toLowerCase().startsWith("/quit")) {
                         return;
                     } else if (input.startsWith("MESSAGE")) {
-                        serverSingleton.broadcast( input);
+                        String message = input.substring(7);
+                        String time = serverSingleton.getTime();
+                        String toBroadcast = "MESSAGE" + time + message;
+                        serverSingleton.broadcast(toBroadcast);
                     } else if (input.startsWith("VIEWMEMBERS")) {
                         serverSingleton.viewMembers(input.substring(11));
-                    } else if (input.startsWith("/WHISPER:")) {
-                        String targetMemberMessage = input.substring(9);
-                        String messageFrom = targetMemberMessage.substring(0, targetMemberMessage.indexOf(';')).trim();
-                        String targetMember = targetMemberMessage.substring(messageFrom.length() + 1, targetMemberMessage.indexOf(' ')).trim();
-                        String message = input.substring(messageFrom.length() + 2 + targetMember.length() + 9);
-                        serverSingleton.whisper(targetMember, message, messageFrom);
+                    } else if (input.startsWith("WHISPER")) {
+                        String[] inputArray = input.split(":");
+                        String firstPart = inputArray[0];
+                        String message = String.join(":",
+                                Arrays.copyOfRange(inputArray, 1, inputArray.length));
+                        String target = firstPart.substring(7);
+                        String sender = getName();
+                        serverSingleton.whisper(target, message, sender);
                     } else if (input.startsWith("CHECKALIVE")) {
                         serverSingleton.broadcast(input);
                     } else if (input.startsWith("ALIVE")) {
@@ -169,7 +176,7 @@ public class ServerThread implements ICommunicator, Runnable {
                 pool.execute(new ServerThread(listener.accept()));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
     }
 }
