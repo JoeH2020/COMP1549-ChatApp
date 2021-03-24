@@ -274,15 +274,20 @@ public class ServerThreadTest {
         Thread.sleep(1000);
 
         // make sure the outputStream has been written what we expect
-        String expectedString = "SUBMITNAME\nNAMEACCEPTED\nMEMBERSPaul,George,John";
+        String expectedString = "SUBMITNAME\nNAMEACCEPTED\nMEMBERSPaul,George,John\n";
         String outputString = outputStream.toString("UTF-8");
+        Assert.assertEquals(expectedString, outputString);
+
+    }
+
+    @Test
+    public void whisper() {
 
     }
 
     /*
     TODO
     test all keywords:
-    VIEWMEMBERS
     WHISPER
     CHECKALIVE
     ALIVE
