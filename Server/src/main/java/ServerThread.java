@@ -31,7 +31,7 @@ public class ServerThread implements ICommunicator, Runnable {
         serverSingleton.addThreadInstance(this);
 
         try {
-            System.out.println("New client joined: " + socket.getInetAddress() + ":" + socket.getPort());
+            System.out.println("New client trying to join: " + socket.getInetAddress() + ":" + socket.getPort());
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
             out.println("SUBMITNAME");

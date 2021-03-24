@@ -105,7 +105,7 @@ public class ClientCommunicator implements ICommunicator {
                         Iterator<String> memberNamesIterator = Arrays.stream(memberNames).iterator();
                         while (memberNamesIterator.hasNext()) {
                             toPrint.append(memberNamesIterator.next());
-                            if (memberNamesIterator.hasNext()) toPrint.append(" ,");
+                            if (memberNamesIterator.hasNext()) toPrint.append(", ");
                         }
                         // add them to the members list if it's empty
                         addMembers(memberNames);
