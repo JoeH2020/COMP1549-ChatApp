@@ -44,6 +44,7 @@ public class ServerSingleton {
 
     public void whisper(String targetMember, String msg, String messageFrom) {
         ServerThread targetThread = members.get(new Member(targetMember, null, null));
+        if (targetThread == null) return;
         String toSend = "WHISPER" + getTime() + messageFrom + ":" + msg;
         targetThread.getPrintWriter().println(toSend);
     }
