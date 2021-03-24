@@ -80,7 +80,7 @@ public class ServerThread implements ICommunicator, Runnable {
                             toReturn.append(membersIterator.next().getUID());
                             if (membersIterator.hasNext()) toReturn.append(',');
                         }
-                        serverSingleton.viewMembers(toReturn.toString());
+                        out.println(toReturn.toString());
                     } else if (input.startsWith("WHISPER")) {
                         String[] inputArray = input.split(":");
                         String firstPart = inputArray[0];
