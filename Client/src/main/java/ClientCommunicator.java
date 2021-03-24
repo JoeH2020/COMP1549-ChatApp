@@ -3,10 +3,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Scanner;
+import java.util.*;
 
 public class ClientCommunicator implements ICommunicator {
 
@@ -49,6 +46,8 @@ public class ClientCommunicator implements ICommunicator {
                     } else if (line.startsWith("NAMEACCEPTED")) {
                         // Need to call the method to update the GUI window with the username and allow user entry
                         System.out.println("Connected to server.");
+                        // after connecting request a member list
+                        out.println("VIEWMEMBERS");
                     } else if (line.startsWith("NAMEREFUSED")) {
                         System.out.println("Username is already in use. Please choose a new username.");
                         // Quit the program because the username is specified in command line
@@ -98,6 +97,19 @@ public class ClientCommunicator implements ICommunicator {
                         String message = String.join(":", messageArray);
                         String toPrint = "[%s:%s] %s whispered: %s".formatted(hours, minutes, sender, message);
                         System.out.println(toPrint);
+                    } else if (line.startsWith("MEMBERS")) {
+                        // print the members
+                        String membersString = line.substring(7);
+                        String[] memberNames = membersString.split(",");
+                        StringBuilder toPrint = new StringBuilder("Online Members: ");
+                        Iterator<String> memberNamesIterator = Arrays.stream(memberNames).iterator();
+                        while (memberNamesIterator.hasNext()) {
+                            toPrint.append(memberNamesIterator.next());
+                            if (memberNamesIterator.hasNext()) toPrint.append(" ,");
+                        }
+                        // add them to the members list if it's empty
+                        addMembers(memberNames);
+                        System.out.println(toPrint);
                     } else {
                         System.out.println(line);
                     }
@@ -106,7 +118,7 @@ public class ClientCommunicator implements ICommunicator {
                 if (userInputQueue.hasItems()) {
                     String item = userInputQueue.nextItem();
                     if (item.equals("/VIEWMEMBERS")) {
-                        out.println("VIEWMEMBERS"+self.getUID());
+                        out.println("VIEWMEMBERS");
                     } else if (item.startsWith("/WHISPER")) {
                         String[] words = item.split(" ");
                         String to = words[1];
@@ -130,6 +142,12 @@ public class ClientCommunicator implements ICommunicator {
 //            Call methods to update the frame and make it visible (window needs to have focus)
 //            frame.setVisible(false);
 //            frame.dispose();
+        }
+    }
+
+    private void addMembers(String[] memberNames) {
+        for (String name: memberNames) {
+            members.add(new Member(name, null, null));
         }
     }
 
