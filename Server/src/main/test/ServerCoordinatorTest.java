@@ -7,9 +7,11 @@ import org.mockito.Mockito;
 import org.w3c.dom.ls.LSOutput;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Scanner;
 
 import static org.mockito.Mockito.mockingDetails;
@@ -17,89 +19,65 @@ import static org.mockito.Mockito.when;
 
 public class ServerCoordinatorTest {
 
-    @Mock
-    static ServerThread serverCommunicator;
-
-    @Mock
-    static ServerSocket serverSocket;
-    static Socket socket;
-
-    static ServerCoordinator serverCoordinator;
-
-    static final String PING_CONFIRM = "ALIVE";
-    static final String PING_MESSAGE = "CHECKALIVE";
-    static final String TIMEOUT_MESSAGE = "TIMEOUT";
-
-    static Member[] members;
-
-    static ByteArrayOutputStream serverOutputStream = new ByteArrayOutputStream();
-
-    @BeforeAll
-    public static void beforeAll() throws IOException {
-
-        serverCommunicator = Mockito.mock(ServerThread.class);
-
-        //Creating an array with two 'fake' members.
-        members = new Member[3];
-        members[0] = new Member("John", "192.168.0.3", "4300");
-        members[1] = new Member("Mike", "192.168.0.2", "4300");
-        members[2] = new Member("Peter", "192.168.0.1", "4300");
-
-        //Creating mock methods to return correct values which in this case
-        // are the coordinator's ip and port.
-        when(serverCommunicator.getTargetIP()).thenReturn("192.168.0.3");
-        when(serverCommunicator.getTargetPort()).thenReturn("4300");
-        when(serverCommunicator.getMembers()).thenReturn(members);
-
-        ServerSocket serverSocket = Mockito.mock(ServerSocket.class);
-        Socket socket = Mockito.mock(Socket.class);
-
-        serverCoordinator = new ServerCoordinator(serverCommunicator) {
-            @Override
-            protected Socket getClientSocket(ServerSocket listener) {return socket;}
-
-            };
-        when(socket.getOutputStream()).thenReturn(serverOutputStream);
-
-    }
-
-
-
     @BeforeEach
     public void beforeEach() {
-        // empty the serverOutputStream
-        serverOutputStream.reset();
+        // reset the singleton
+        ServerSingleton.reset();
     }
 
     @Test
-    public void coordinatorTimedOut() {
-        socket = serverCoordinator.getClientSocket(serverSocket);
-        ByteArrayInputStream coordinatorInputStream = new ByteArrayInputStream(new byte[0]);
-        ByteArrayOutputStream coordinatorOutputStream = new ByteArrayOutputStream();
+    public void coordinatorTimedOut() throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+        // first mock the serverThread
+        ServerThread thread = Mockito.mock(ServerThread.class);
+        when(thread.getSelf()).thenReturn(new Member("Coordinator", null, null));
 
-        try {
-            when(socket.getInputStream()).thenReturn(coordinatorInputStream);
-            when(socket.getOutputStream()).thenReturn(coordinatorOutputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // we need to mock the singleton too
+        ServerSingleton singleton = Mockito.mock(ServerSingleton.class);
 
-        serverCoordinator.run();
+        // now we need to make sure the actual singleton class returns this instance when asked
+        // there is no way other than reflections to do this (without PowerMockito)
+        Class singletonClass = ServerSingleton.class;
+        Field instanceField = singletonClass.getDeclaredField("instance");
+        instanceField.setAccessible(true);
+        instanceField.set(null, singleton);
+
+        // now let it run for 16 seconds
+        ServerCoordinator serverCoordinator = new ServerCoordinator(thread);
+        serverCoordinator.start();
+        Thread.sleep(16000);
+
+        // now let's check that everything that should have happened has happened
+        Mockito.verify(thread).sendMessage("CHECKALIVE");
+        Mockito.verify(singleton).broadcast("TIMEOUTCoordinator");
+        Mockito.verify(singleton).selectNewCoordinator();
     }
 
     @Test
-    public void coordinatorStillAlive() {
-        socket = serverCoordinator.getClientSocket(serverSocket);
-        ByteArrayInputStream coordinatorInputStream = new ByteArrayInputStream((PING_CONFIRM).getBytes(StandardCharsets.UTF_8));
-        ByteArrayOutputStream coordinatorOutputStream = new ByteArrayOutputStream();
+    public void coordinatorStillAlive() throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+        // first mock the serverThread
+        ServerThread thread = Mockito.mock(ServerThread.class);
+        when(thread.getSelf()).thenReturn(new Member("Coordinator", null, null));
 
-        try {
-            when(socket.getInputStream()).thenReturn(coordinatorInputStream);
-            when(socket.getOutputStream()).thenReturn(coordinatorOutputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // we need to mock the singleton too
+        ServerSingleton singleton = Mockito.mock(ServerSingleton.class);
 
-        serverCoordinator.run();
+        // now we need to make sure the actual singleton class returns this instance when asked
+        // there is no way other than reflections to do this (without PowerMockito)
+        Class singletonClass = ServerSingleton.class;
+        Field instanceField = singletonClass.getDeclaredField("instance");
+        instanceField.setAccessible(true);
+        instanceField.set(null, singleton);
+
+        // now let it run for 8 seconds and send a positive response
+        ServerCoordinator serverCoordinator = new ServerCoordinator(thread);
+        serverCoordinator.start();
+        Thread.sleep(8000);
+        serverCoordinator.positiveResponse();
+        Thread.sleep(2000);
+
+        // now let's check that everything that should have happened has happened
+        Mockito.verify(thread).sendMessage("CHECKALIVE");
+        Mockito.verify(singleton, Mockito.times(0)).broadcast("TIMEOUTCoordinator");
+        Mockito.verify(singleton, Mockito.times(0)).selectNewCoordinator();
     }
 }
