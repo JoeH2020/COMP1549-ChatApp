@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,7 +61,6 @@ public class ServerThread implements ICommunicator, Runnable {
                     return;
                 }
                 serverSingleton.broadcast("JOIN" + name);
-                serverSingleton.return_to_self("Online Members List: "+serverSingleton.returnMembers(), prospectiveMember.toString());
 
                 // Accept messages from this client and broadcast them.
                 while (true) {
@@ -73,7 +73,14 @@ public class ServerThread implements ICommunicator, Runnable {
                         String toBroadcast = "MESSAGE" + time + message;
                         serverSingleton.broadcast(toBroadcast);
                     } else if (input.startsWith("VIEWMEMBERS")) {
-                        serverSingleton.viewMembers(input.substring(11));
+                        HashSet<Member> members = serverSingleton.getMembers();
+                        StringBuilder toReturn = new StringBuilder("MEMBERS");
+                        Iterator<Member> membersIterator = members.iterator();
+                        while(membersIterator.hasNext()) {
+                            toReturn.append(membersIterator.next().getUID());
+                            if (membersIterator.hasNext()) toReturn.append(',');
+                        }
+                        serverSingleton.viewMembers(toReturn.toString());
                     } else if (input.startsWith("WHISPER")) {
                         String[] inputArray = input.split(":");
                         String firstPart = inputArray[0];
@@ -100,24 +107,16 @@ public class ServerThread implements ICommunicator, Runnable {
                         String name = input.substring(7);
                         Member toRemove = new Member(name, null, null);
                         serverSingleton.removeMember(toRemove);
-                    } else if (input.startsWith("DISCONNECTED")) {
-                        // the coordinator is telling us someone has disconnected,
-                        // propagate it to everyone else
-                        serverSingleton.broadcast(input);
-
-                        // also remove them from server list
-                        String name = input.substring(12);
-                        Member toRemove = new Member(name, null, null);
-                        serverSingleton.removeMember(toRemove);
-                    }
-                    else if (!socket.isConnected()){
+                    } else if (!socket.isConnected()) {
                         // the socket has been disconnected so we remove client and inform everyone else
-                        serverSingleton.broadcast("DISCONNECTED"+ prospectiveMember);
+                        serverSingleton.broadcast("DISCONNECTED"+ prospectiveMember.getUID());
+
+                        // if this thread is the coordinator thread we should tell the singleton to choose a new one
+                        System.out.println("Coordinator has disconnected.");
+                        serverSingleton.selectNewCoordinator();
 
                         // also remove them from server list
-                        String name = input.substring(12);
-                        Member toRemove = new Member(name, null, null);
-                        serverSingleton.removeMember(toRemove);
+                        serverSingleton.removeMember(prospectiveMember);
                     }
                 }
             }

@@ -60,18 +60,7 @@ public class ServerCoordinator extends Coordinator {
                 // select a new coordinator
                 serverSingleton.selectNewCoordinator();
             }
-            
-            isConnected = false;
-            //            TODO: Add in code to determine if coordinator has disconnected
-            if (!isConnected) {
-                System.out.println("Coordinator has disconnected");
 
-                // tell everyone the coordinator has disconnected
-                serverSingleton.broadcast("DISCONNECTED" + communicator.getSelf().getUID());
-
-                // select a new coordinator
-                serverSingleton.selectNewCoordinator();
-            }
         }
     }
 
