@@ -105,7 +105,7 @@ public class ServerThreadTest {
         // wait a bit for everything to work
         Thread.sleep(1000);
 
-        String expectedOutput = "SUBMITNAME\nNAMEACCEPTED\nSETCOORDINATOR\nJOINPaul\nOnline Members List: [Paul]\n";
+        String expectedOutput = "SUBMITNAME\nNAMEACCEPTED\nSETCOORDINATOR\nJOINPaul\n";
         Assert.assertEquals(expectedOutput, outputStream.toString());
 
     }
@@ -141,7 +141,7 @@ public class ServerThreadTest {
         // wait a bit for everything to work
         Thread.sleep(1000);
 
-        String expectedOutput = "SUBMITNAME\nNAMEACCEPTED\nJOINSecond\nOnline Members List: [Paul, Second]\n";
+        String expectedOutput = "SUBMITNAME\nNAMEACCEPTED\nJOINSecond\n";
         Assert.assertEquals(expectedOutput, outputStream.toString());
 
     }
@@ -177,7 +177,7 @@ public class ServerThreadTest {
         // wait a bit for everything to work
         Thread.sleep(1000);
 
-        String expectedOutput = "SUBMITNAME\nNAMEACCEPTED\nSETCOORDINATOR\nJOINPaul\nOnline Members List: [Paul]\n";
+        String expectedOutput = "SUBMITNAME\nNAMEREFUSED\n";
         Assert.assertEquals(expectedOutput, outputStream.toString());
     }
 
