@@ -415,10 +415,48 @@ public class ServerThreadTest {
         Assert.assertEquals(expectedOutput, coordinatorOutput);
     }
 
-    /*
-    TODO
-    test all keywords:
-    TIMEOUT
-    DISCONNECTED
-     */
+    @Test
+    public void timeout() throws NoSuchFieldException, IllegalAccessException, IOException, InterruptedException {
+        // this test makes sure the server responds appropriately to the TIMEOUT keyword
+
+        // we need to mock the singleton for this
+        ServerSingleton singleton = Mockito.mock(ServerSingleton.class);
+        when(singleton.getMembers()).thenReturn(new HashSet<Member>());
+        when(singleton.getTime()).thenReturn("1500");
+
+        // now we need to make sure the actual singleton class returns this instance when asked
+        // there is no way other than reflections to do this (without PowerMockito)
+        Class singletonClass = ServerSingleton.class;
+        Field instanceField = singletonClass.getDeclaredField("instance");
+        instanceField.setAccessible(true);
+        instanceField.set(null, singleton);
+
+        // mock the socket so that it returns our OutputStream when requested
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Socket socket = Mockito.mock(Socket.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+
+        // now create an appropriate InputStream for the class to work properly
+        // the class requests the name
+        String input = "Paul\nTIMEOUTGeorge\n";
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        when(socket.getInputStream()).thenReturn(inputStream);
+
+        // also mock getInetAddress and getPort for everything to work
+        when(socket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
+        when(socket.getPort()).thenReturn(7738);
+
+        // now run the class
+        ServerThread thread = new ServerThread(socket);
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(thread);
+
+        // wait a bit for everything to work
+        Thread.sleep(1000);
+
+        // make sure the serverSingleton.broadcast method has been called with the right parameters
+        Mockito.verify(singleton).broadcast("TIMEOUTGeorge");
+        // also george should have been removed from the member list
+        Mockito.verify(singleton).removeMember(new Member("George", null, null));
+    }
 }
