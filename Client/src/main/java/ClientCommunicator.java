@@ -127,6 +127,12 @@ public class ClientCommunicator implements ICommunicator {
                         String toSend = "WHISPER" + to + ":" + message;
                         out.println(toSend);
                         System.out.println("Whispered to %s: %s".formatted(to, message));
+                    } else if (item.startsWith("/TIMEOUT")) {
+                        if (coordinator.getName() == self.getUID()){
+                            coordinator.interrupt();
+                        Thread.sleep(60000);
+                        System.exit(0);
+                        }
                     } else {
                         out.println("MESSAGE" + self.getUID() + ":" + item);
                     }
