@@ -112,8 +112,10 @@ public class ServerThread implements ICommunicator, Runnable {
                         serverSingleton.broadcast("DISCONNECTED"+ prospectiveMember.getUID());
 
                         // if this thread is the coordinator thread we should tell the singleton to choose a new one
-                        System.out.println("Coordinator has disconnected.");
-                        serverSingleton.selectNewCoordinator();
+                        if (isCoordinatorThread){
+                            System.out.println("Coordinator has disconnected.");
+                            serverSingleton.selectNewCoordinator();
+                        }
 
                         // also remove them from server list
                         serverSingleton.removeMember(prospectiveMember);
