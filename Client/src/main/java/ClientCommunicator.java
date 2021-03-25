@@ -31,7 +31,7 @@ public class ClientCommunicator implements ICommunicator {
     private void openSession() throws IOException {
 
         try {
-            Socket socket = new Socket(serverIP, 59001);
+            Socket socket = new Socket(serverIP, Integer.parseInt(serverPort));
             serverInputQueue = new InputQueue(socket.getInputStream());
             serverInputQueue.start();
             userInputQueue.start();
@@ -181,8 +181,8 @@ public class ClientCommunicator implements ICommunicator {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.err.println("Please specify port and IP.");
+        if (args.length != 3) {
+            System.err.println("Please specify your nickname, and the server's IP and port.");
             return;
         }
 
@@ -190,18 +190,15 @@ public class ClientCommunicator implements ICommunicator {
 //        int membersSize = members.size(); //To do this I made members static, change if this is a problem.
 //        membersSize++;
 //        String uniqueID = String.valueOf(membersSize); //Used to create a unique ID, check length and add 1
+        String userID = args[0];
         String serverIP = args[1];
-//
+        String serverPort = args[2];
+
 //        Socket socket = new Socket(args[0], 59001);
-//
 //        String selfIP = String.valueOf(socket.getInetAddress()); //Getting the IP of the Client as a String
 //        String selfPort = String.valueOf(socket.getPort()); //Getting the port number of client as a String
 
-
-
-        ClientCommunicator client = new ClientCommunicator(args[0], "127.0.0.1", "59001", serverIP, serverPort);
-
+        ClientCommunicator client = new ClientCommunicator(userID, "127.0.0.1", "59001", serverIP, serverPort);
         client.openSession(); //Start the session
     }
-
 }
