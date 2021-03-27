@@ -177,16 +177,4 @@ public class ServerThread implements ICommunicator, Runnable {
     }
 
     public void sendMessage(String message) {}
-
-    public static void main(String[] args) {
-        System.out.println("Waiting for clients to join...");
-        ExecutorService pool = Executors.newFixedThreadPool(500);
-        try (ServerSocket listener = new ServerSocket(59001)) {
-            while (true) {
-                pool.execute(new ServerThread(listener.accept()));
-            }
-        } catch (IOException e) {
-
-        }
-    }
 }
