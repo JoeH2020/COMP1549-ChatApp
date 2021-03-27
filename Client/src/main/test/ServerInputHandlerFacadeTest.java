@@ -1,5 +1,5 @@
+import junit.framework.Assert;
 import org.apache.maven.settings.Server;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

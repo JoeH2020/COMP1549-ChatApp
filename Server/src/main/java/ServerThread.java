@@ -35,6 +35,7 @@ public class ServerThread implements ICommunicator, Runnable {
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
             out.println("SUBMITNAME");
+            ClientInputHandlerFacade inputHandler = new ClientInputHandlerFacade(this);
 
             // Keep requesting a name until we get a unique one.
             while (in.hasNextLine()) {
@@ -42,6 +43,7 @@ public class ServerThread implements ICommunicator, Runnable {
                 if (name == null) {
                     return;
                 }
+                // start the process for accepting a new member
                 members = serverSingleton.getMembers();
                 Member prospectiveMember = new Member(name, socket.getInetAddress().toString(), String.valueOf(socket.getPort()));
                 if (members.isEmpty()) {
@@ -57,57 +59,18 @@ public class ServerThread implements ICommunicator, Runnable {
                     out.println("NAMEACCEPTED");
                     addMember(prospectiveMember);
                 } else {
+                    // there already is a member with this name, refuse them
                     out.println("NAMEREFUSED");
                     return;
                 }
+                // client is accepted, tell everyone they joined
                 serverSingleton.broadcast("JOIN" + name);
 
                 // Accept messages from this client and broadcast them.
                 while (true) {
                     String input = in.nextLine();
-                    if (input.toLowerCase().startsWith("/quit")) {
-                        return;
-                    } else if (input.startsWith("MESSAGE")) {
-                        String message = input.substring(7);
-                        String time = serverSingleton.getTime();
-                        String toBroadcast = "MESSAGE" + time + message;
-                        serverSingleton.broadcast(toBroadcast);
-                    } else if (input.startsWith("VIEWMEMBERS")) {
-                        HashSet<Member> members = serverSingleton.getMembers();
-                        StringBuilder toReturn = new StringBuilder("MEMBERS");
-                        Iterator<Member> membersIterator = members.iterator();
-                        while(membersIterator.hasNext()) {
-                            toReturn.append(membersIterator.next().getUID());
-                            if (membersIterator.hasNext()) toReturn.append(',');
-                        }
-                        out.println(toReturn.toString());
-                    } else if (input.startsWith("WHISPER")) {
-                        String[] inputArray = input.split(":");
-                        String firstPart = inputArray[0];
-                        String message = String.join(":",
-                                Arrays.copyOfRange(inputArray, 1, inputArray.length));
-                        String target = firstPart.substring(7);
-                        String sender = getName();
-                        serverSingleton.whisper(target, message, sender);
-                    } else if (input.startsWith("CHECKALIVE")) {
-                        serverSingleton.broadcast(input);
-                    } else if (input.startsWith("ALIVE")) {
-                        // when getting an ALIVE response, forward it to the coordinator
-                        serverSingleton.getCoordinatorOut().println(input);
-                       if (isCoordinatorThread) {
-                            // if this is the coordinator, tell the server coordinator this thread is alive
-                            serverSingleton.getServerCoordinator().positiveResponse();
-                        }
-                    } else if (input.startsWith("TIMEOUT")) {
-                        // the coordinator is telling us someone has timed out,
-                        // propagate it to everyone else
-                        serverSingleton.broadcast(input);
-
-                        // also remove them from server list
-                        String name = input.substring(7);
-                        Member toRemove = new Member(name, null, null);
-                        serverSingleton.removeMember(toRemove);
-                    } else if (!socket.isConnected()) {
+                    inputHandler.handleInput(input);
+                    if (!socket.isConnected()) {
                         // the socket has been disconnected so we remove client and inform everyone else
                         serverSingleton.broadcast("DISCONNECTED"+ prospectiveMember.getUID());
 
@@ -132,10 +95,19 @@ public class ServerThread implements ICommunicator, Runnable {
         }
     }
 
-
     private void addMember(Member member) {
         members.add(member);
         serverSingleton.addMember(member, this);
+    }
+
+    @Override
+    public Member[] getMembers() {
+        return serverSingleton.getMembers().toArray(new Member[0]);
+    }
+
+    public Member getSelf() {
+        Member m = new Member(name, getTargetIP(), getTargetPort());
+        return m;
     }
 
     @Override
@@ -148,33 +120,16 @@ public class ServerThread implements ICommunicator, Runnable {
         return Integer.toString(socket.getPort());
     }
 
-    @Override
-    public Member[] getMembers() {
-        return serverSingleton.getMembers().toArray(new Member[0]);
+    public boolean isCoordinatorThread() {
+        return isCoordinatorThread;
     }
-
-    public PrintWriter getPrintWriter() {
-        return out;
-    }
-
-    public Member getSelf() {
-        Member m = new Member(getName(), getTargetIP(), getTargetPort());
-        return m;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public PrintWriter getOut() {
-        return out;
-    }
-
 
     public void setAsCoordinator() {
         out.println("SETCOORDINATOR");
         isCoordinatorThread = true;
     }
 
-    public void sendMessage(String message) {}
+    public void sendMessage(String message) {
+        out.println(message);
+    }
 }

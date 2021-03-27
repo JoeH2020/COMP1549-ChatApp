@@ -30,7 +30,7 @@ public class ServerSingleton {
     public void broadcast(String msg) {
         Iterator<ServerThread> it = serverThreads.iterator();
         while(it.hasNext()){
-            it.next().getPrintWriter().println(msg);
+            it.next().sendMessage(msg);
         }
     }
 
@@ -46,7 +46,7 @@ public class ServerSingleton {
         ServerThread targetThread = members.get(new Member(targetMember, null, null));
         if (targetThread == null) return;
         String toSend = "WHISPER" + getTime() + messageFrom + ":" + msg;
-        targetThread.getPrintWriter().println(toSend);
+        targetThread.sendMessage(toSend);
     }
 
     public void return_to_self(String message, String UID){
@@ -54,10 +54,10 @@ public class ServerSingleton {
 
         while (it.hasNext()) {
             ServerThread currentThread = it.next();
-            String compare = currentThread.getName();
+            String compare = currentThread.getSelf().getUID();
             // Compare to only send to specific Thread
             if (compare.equals(UID) ) {
-                currentThread.getPrintWriter().println(message);
+                currentThread.sendMessage(message);
             }
         }
     }
@@ -110,8 +110,7 @@ public class ServerSingleton {
     }
 
     public synchronized void setCoordinator(ServerThread coordinatorThread) {
-        this.coordinator = new Member(coordinatorThread.getName(), coordinatorThread.getTargetIP(), coordinatorThread.getTargetPort());
-        this.coordinatorOut = coordinatorThread.getOut();
+        this.coordinator = new Member(coordinatorThread.getSelf().getUID(), coordinatorThread.getTargetIP(), coordinatorThread.getTargetPort());
         if (serverCoordinator == null) {
             serverCoordinator = new ServerCoordinator(coordinatorThread);
             serverCoordinator.start();
