@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.net.ConnectException;
 
 public class ClientMain {
 
@@ -14,6 +15,11 @@ public class ClientMain {
         String serverPort = args[2];
 
         ClientCommunicator client = new ClientCommunicator(userID, "127.0.0.1", "59001", serverIP, serverPort);
-        client.openSession();
+        try {
+            client.openSession();
+        } catch (ConnectException e) {
+            System.out.println("No server found with specified IP and port.");
+            System.exit(0);
+        }
     }
 }
