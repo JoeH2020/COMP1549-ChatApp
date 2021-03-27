@@ -20,10 +20,9 @@ public class UserInputHandlerFacade {
             communicator.sendMessage(toSend);
             System.out.println("Whispered to %s: %s".formatted(to, message));
         } else if (input.startsWith("/TIMEOUT")) {
-            if (communicator.getCoordinator() != null) {
+            if (communicator.getCoordinator() != null)
                 communicator.getCoordinator().interrupt();
-                communicator.timeOut();
-            }
+            communicator.timeOut();
         } else {
             communicator.sendMessage("MESSAGE" + communicator.getSelf().getUID() + ":" + input);
         }
